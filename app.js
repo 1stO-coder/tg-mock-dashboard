@@ -1,0 +1,1560 @@
+// TG Mock Score Dashboard - Core Logic
+
+// Configuration
+let DEFAULT_API_URL = "https://script.google.com/macros/s/AKfycbyT0XEcdi8pyRYu2GpYnXB-Q33LQfsdLRwghmvX7ZlXhgz2iNqbXuSOD1Gfit0uRCOV/exec"; // Change this to your Apps Script Web App URL if you want it hardcoded
+let apiUrl = localStorage.getItem("tg_mock_api_url") || DEFAULT_API_URL;
+
+// State Database
+let db = {
+  mocks: [],
+  scores: []
+};
+
+// Application State
+let selectedMockName = "";
+let selectedCandidateName = "";
+let rankingType = "raw"; // "raw" or "weighted"
+let targetScores = JSON.parse(localStorage.getItem("tg_mock_targets") || "{}");
+let mockFormMode = "create"; // "create" or "edit"
+let editingOriginalMockName = "";
+let editingOriginalParts = [];
+
+// Chart.js Instances
+let barChartInstance = null;
+let radarChartInstance = null;
+
+
+// Recommendation tips map for sub-tests (Thai Language)
+const STUDY_TIPS = {
+  // TG Mock 5
+  "Series pic": {
+    desc: "โจทย์อนุกรมรูปภาพวัดการหาความสัมพันธ์เชิงมิติสัมพันธ์",
+    tip: "ฝึกทักษะการกวาดสายตามองการเปลี่ยนแปลงแบบทีละสเต็ป เช่น การหมุน (Rotation), การสลับสี, การย่อขยายขนาด และความถี่ของรูปทรงในแต่ละช่อง และฝึกทำโจทย์แนวนี้อย่างสม่ำเสมอ"
+  },
+  "Non-verbal Reasoning": {
+    desc: "โจทย์การใช้เหตุผลเชิงรูปภาพและสัญลักษณ์ที่ไม่ใช้ภาษา",
+    tip: "ฝึกสรุปกฎเกณฑ์ความสัมพันธ์ระหว่างภาพตั้งต้น โดยเปรียบเทียบในมุมของเงื่อนไข (ถ้า...แล้ว...) หรือหาภาพที่ไม่เข้าพวก ฝึกทำข้อสอบมิติสัมพันธ์บ่อยๆ"
+  },
+  "3D cube": {
+    desc: "โจทย์การนับบล็อกลูกบาศก์ 3 มิติ หรือหมุนรูปทรงสามมิติ",
+    tip: "แนะนำให้ใช้แอปพลิเคชันหรือเว็บช่วยจำลองบล็อก 3 มิติ เพื่อฝึกมุมมอง (Perspective) หรือพยายามนับทีละแถว/ทีละชั้นจากฐานขึ้นมาเพื่อลดความผิดพลาดในการมองข้ามช่องที่ถูกบัง"
+  },
+  "Perceptual speed": {
+    desc: "โจทย์ความเร็วในการสังเกต สแกนสัญลักษณ์ หรือการจับคู่รูปทรง",
+    tip: "พาร์ทนี้ต้องแข่งกับเวลา ให้เน้นฝึกจับเวลาตอนทำแบบฝึกหัด (เช่น ตั้งเป้าข้อละไม่เกิน 15-20 วินาที) ฝึกสมาธิให้อยู่กับที่และใช้สายตากวาดหาจุดร่วมจุดต่างอย่างว่องไว"
+  },
+  "Estimating": {
+    desc: "โจทย์การประมาณค่าเชิงคำนวณ คณิตศาสตร์ หรือขนาดพื้นที่",
+    tip: "ห้ามคำนวณตรงๆ! ให้ฝึกเทคนิคการปัดเศษตัวเลข เช่น 398.7 -> 400 เพื่อคิดเลขในใจได้อย่างรวดเร็ว และจับทริคการตัดช้อยส์ที่ห่างจากความเป็นจริงออกไปก่อน"
+  },
+  "Shape scanning": {
+    desc: "โจทย์ค้นหารูปทรงต้นแบบที่ซ่อนอยู่ในภาพที่ซับซ้อน",
+    tip: "ฝึกแยกประสาทตาและจับจุดสังเกตเฉพาะของรูปทรง เช่น มุมแหลม, ด้านยาว, หรือจำนวนเส้นผ่านศูนย์กลาง แล้วสแกนหาจุดอ้างอิงเหล่านั้นในภาพใหญ่เพื่อความเร็ว"
+  },
+  "Cube Folding": {
+    desc: "โจทย์การคลี่และพับกล่องลูกบาศก์ที่มีลายต่างกันแต่ละหน้า",
+    tip: "ลองหากระดาษแข็งมาตัดและวาดลายพับกล่องของจริง เพื่อฝึกสมองซีกขวาให้เห็นความสัมพันธ์ระหว่างด้านที่อยู่ติดกันและด้านที่อยู่ตรงข้ามกัน (ด้านตรงข้ามจะไม่มีวันมองเห็นพร้อมกัน)"
+  },
+  "Series Number": {
+    desc: "โจทย์อนุกรมตัวเลขและการวิเคราะห์ลำดับคณิตศาสตร์",
+    tip: "ฝึกจำรูปแบบการเปลี่ยนแปลงยอดนิยม: อนุกรม 2 ชั้น, อนุกรมผสม, การคูณ/หารคงที่, เลขยกกำลัง และฝึกทำโจทย์ให้เจอลายแทงตัวเลขบ่อยๆ จนเกิดความคุ้นเคย"
+  },
+  "Scanning/Comparing": {
+    desc: "โจทย์เปรียบเทียบข้อมูลสองฝั่งว่าเหมือนหรือต่างกันอย่างไร",
+    tip: "ใช้นิ้วหรือปากกาช่วยชี้เพื่อโฟกัสสายตาเปรียบเทียบทีละ 3-4 ตัวอักษร/ตัวเลข ระวังจุดลวงที่มักจะสลับตำแหน่งหรือเปลี่ยนตัวอักษรที่คล้ายกัน เช่น O กับ 0 หรือ l กับ 1"
+  },
+  "Pair of scales": {
+    desc: "โจทย์ตาชั่งเปรียบเทียบน้ำหนักสิ่งของและแก้สมการรูปภาพ",
+    tip: "ใช้วิธีการแทนค่าตัวเลขสมมติ (เช่น ให้รูป A หนัก 10, B หนัก 5) เพื่อคำนวณหาน้ำหนักที่สมดุลได้ง่ายขึ้น หรือใช้วิธีกำจัดตัวแปรที่เหมือนกันออกไปทั้งสองข้างของตาชั่ง"
+  },
+  "Interruption": {
+    desc: "โจทย์วัดสมาธิและการตัดสินใจเมื่อมีตัวรบกวนแทรกเข้ามา",
+    tip: "ฝึกสติในการประมวลผลสองอย่างพร้อมกัน หรือการทำงานภายใต้เวลาที่จำกัด ฝึกทำแบบฝึกหัดสไตล์สลับโหมดคำนวณและโหมดเปรียบเทียบข้อมูลสลับไปมาอย่างรวดเร็ว"
+  },
+  "STM": {
+    desc: "โจทย์ทดสอบความจำระยะสั้น (Short-Term Memory)",
+    tip: "ฝึกใช้เทคนิคการจับกลุ่มข้อมูล (Chunking) หรือจินตนาการเชื่อมโยงภาพและคำที่ต้องจำให้กลายเป็นเรื่องราสตลกๆ หรือเรื่องเด่นๆ ในหัว จะช่วยดึงข้อมูลกลับมาตอนทำโจทย์ได้ดีมาก"
+  },
+
+  // Mock TG1 & Mock TG2 Additional Parts
+  "Series Picture": {
+    desc: "โจทย์อนุกรมรูปภาพวัดการหาความสัมพันธ์เชิงมิติสัมพันธ์",
+    tip: "วิเคราะห์การเปลี่ยนแปลงอย่างเป็นระบบ (เช่น การหมุน รูปแบบความถี่การสลับสี รูปทรง หรือทิศทางที่ซ้ำกัน)"
+  },
+  "2D Puzzle": {
+    desc: "การประกอบชิ้นส่วนภาพ 2 มิติ หรือจับคู่ชิ้นส่วนรูปเรขาคณิต",
+    tip: "สังเกตความยาวของด้าน มุม และขอบของตัวเลือกเพื่อนำมาต่อเข้าคู่กัน หลีกเลี่ยงช้อยส์ที่มีสัดส่วนเพี้ยน"
+  },
+  "Deviation Scanning": {
+    desc: "การสแกนหาจุดเบี่ยงเบนหรือภาพแปลกแยกที่ไม่เข้าพวกอย่างรวดเร็ว",
+    tip: "จับจุดสังเกตหลัก เช่น ทิศทางหัวลูกศร จำนวนเส้น หรือลายรูป สแกนด้วยสายตาเป็นระบบเพื่อหาภาพที่หมุนทิศต่างจากเพื่อน"
+  },
+  "Block Folding": {
+    desc: "โจทย์การคลี่และพับประกอบกล่องลูกบาศก์มิติสัมพันธ์",
+    tip: "พิจารณาความสัมพันธ์ของด้านที่อยู่ติดกันเมื่อพับกล่อง และด้านที่อยู่ตรงข้ามซึ่งจะไม่มีทางเห็นพร้อมกันเด็ดขาด"
+  },
+  "Box Folding": {
+    desc: "โจทย์การคลี่และพับประกอบกล่องลูกบาศก์มิติสัมพันธ์",
+    tip: "พิจารณาความสัมพันธ์ของด้านที่อยู่ติดกันเมื่อพับกล่อง และด้านที่อยู่ตรงข้ามซึ่งจะไม่มีทางเห็นพร้อมกันเด็ดขาด"
+  },
+  "STM Passage": {
+    desc: "การทดสอบความจำระยะสั้นจากข้อความหรือใจความสั้นๆ",
+    tip: "พยายามสร้างเรื่องราวหรือมโนภาพจำในหัวเป็นฉากๆ เชื่อมโยงคีย์เวิร์ดต่างๆ เข้าด้วยกัน จะช่วยให้ดึงข้อมูลกลับมาง่ายขึ้น"
+  },
+  "STM Grid": {
+    desc: "การทดสอบความจำระยะสั้นจากตารางหรือพิกัดโครงข่ายข้อมูล",
+    tip: "ใช้เทคนิคแบ่งกลุ่มพิกัดตารางย่อยๆ (Chunking) หรือสร้างลวดลายการเชื่อมโยงในหัวเพื่อช่วยจดจำสัญลักษณ์"
+  },
+  "Hidden Image": {
+    desc: "การค้นหารูปภาพต้นแบบที่ซ่อนอยู่ภายในลายเส้นซับซ้อน",
+    tip: "จับจุดเด่นของรูปทรงเป้าหมาย (เช่น มุมแหลม หรือส่วนโค้ง) แล้วกวาดสายตาคัดกรองลวดลายพื้นหลังที่รบกวนออก"
+  },
+  "Aircraft Orientation": {
+    desc: "การรับรู้ทิศทางและมุมบินของเครื่องบินเทียบกับเข็มทิศมิติสัมพันธ์",
+    tip: "จินตนาการตัวเราเป็นนักบินในเครื่องบิน สังเกตหน้าปัดความสูง มุมก้มเงย (Pitch) มุมเอียงปีก (Roll) และเข็มทิศ (Yaw) ให้แม่นยำ"
+  },
+  "Block Counting": {
+    desc: "โจทย์การนับบล็อกลูกบาศก์ 3 มิติ ที่วางซ้อนกันซับซ้อน",
+    tip: "แนะนำให้นับไล่ทีละเสาหรือนับตามแนวนอนจากฐานรากขึ้นมาทีละชั้น เพื่อป้องกันการหลงลืมนับกล่องที่โดนกล่องอื่นบดบัง"
+  },
+  "Key Fitting": {
+    desc: "การจับคู่รูปทรงลูกกุญแจกับร่องไขของแม่กุญแจ",
+    tip: "เปรียบเทียบจำนวนรอยหยักและความลึก-ตื้นของร่องกุญแจกับร่องไข ระวังจุดลวงที่ทำการกลับซ้ายขวาในคำตอบ"
+  },
+  "Oblique View": {
+    desc: "การวิเคราะห์มิติสัมพันธ์ของรูปทรง 3 มิติจากมุมมองเอียง",
+    tip: "คาดคะเนระดับความลึกและสัดส่วนของระนาบด้านเฉียง สังเกตจุดที่เชื่อมต่อกันระหว่างพื้นผิวแต่ละด้าน"
+  },
+  "Shape Scanning": {
+    desc: "การกวาดสายตาเพื่อเปรียบเทียบความเร็วและความถูกต้องของรูปทรง",
+    tip: "ฝึกโฟกัสและมีสมาธิกวาดหาเป้าหมายอย่างรวดเร็ว ทำสถิติจับเวลาให้ดีเพื่อเร่งความเร็วในการประมวลผลของสมอง"
+  },
+  "Approximation": {
+    desc: "โจทย์การประมาณค่าเชิงคณิตศาสตร์และคำนวณคาดคะเนตัวเลข",
+    tip: "ปัดเศษตัวเลขให้เป็นเลขกลมๆ (เช่น 99 -> 100) เพื่อช่วยให้คำนวณในใจได้อย่างรวดเร็วแทนการทดเลขยาวๆ"
+  },
+  "Numerical Estimation": {
+    desc: "โจทย์การประมาณค่าเชิงคณิตศาสตร์และคำนวณคาดคะเนตัวเลข",
+    tip: "ปัดเศษตัวเลขให้เป็นเลขกลมๆ (เช่น 99 -> 100) เพื่อช่วยให้คำนวณในใจได้อย่างรวดเร็วแทนการทดเลขยาวๆ"
+  },
+  "Abstract Reasoning": {
+    desc: "การใช้เหตุผลเชิงนามธรรม ค้นหาแนวคิดตรรกะความสัมพันธ์ของรูปภาพ",
+    tip: "ฝึกมองหาระบบการเคลื่อนที่ การเพิ่มขึ้นหรือลดลงของวัตถุ และเงื่อนไขตรรกะรูปทรงที่แปรผันตามกลุ่มลำดับภาพ"
+  },
+  "Cube Assembly": {
+    desc: "การประกอบชิ้นส่วนย่อย 3 มิติ เพื่อรวมเป็นโครงสร้างบล็อกที่กำหนด",
+    tip: "วิเคราะห์ด้านที่เว้าแหว่ง มองหาชิ้นส่วนย่อยที่มีรูปทรงตรงกับรอยแหว่งนั้นๆ แล้วนำมาประกอบกันในจินตนาการ"
+  },
+  "Block Rotation": {
+    desc: "การหมุนบล็อกรูปทรง 3 มิติในจินตนาการเพื่อหาคู่ที่สอดคล้องกัน",
+    tip: "เลือกปุ่มเด่นหรือแกนบล็อกที่ยื่นยาวที่สุดเป็นแกนกลางหลัก แล้วค่อยๆ จินตนาการหมุนเทียบรอบแกนทีละระนาบ"
+  },
+  "Number Scanning": {
+    desc: "การกวาดสายตาค้นหาตัวเลขหรือคีย์เป้าหมายท่ามกลางตารางตัวเลขซับซ้อน",
+    tip: "จ้องจุดเริ่มต้นของเป้าหมาย กวาดสายตาจากซ้ายไปขวาหรือเป็นรูปตัว Z อย่างเป็นระบบ เพื่อช่วยประหยัดเวลาการมองหา"
+  },
+  "Spatial Apperception": {
+    desc: "การรับรู้พื้นที่ทิศทางและมุมมองพิกัดทางภูมิศาสตร์เชิงมิติสัมพันธ์",
+    tip: "ตั้งสติกับพิกัดทิศหลัก (เหนือ ใต้ ออก ตก) สังเกตตำแหน่งของวัตถุเทียบเคียงกับกรอบภาพหรือมุมมองของกล้องจำลอง"
+  }
+};
+
+// Initial Setup
+document.addEventListener("DOMContentLoaded", () => {
+  initTheme();
+  setupEventListeners();
+  loadData();
+});
+
+// Theme Management
+function initTheme() {
+  const savedTheme = localStorage.getItem("tg_mock_theme") || "dark";
+  if (savedTheme === "light") {
+    document.body.classList.add("light-theme");
+    document.getElementById("theme-icon").className = "fa-solid fa-moon";
+  } else {
+    document.getElementById("theme-icon").className = "fa-solid fa-sun";
+  }
+}
+
+function toggleTheme() {
+  const body = document.body;
+  const icon = document.getElementById("theme-icon");
+  if (body.classList.contains("light-theme")) {
+    body.classList.remove("light-theme");
+    icon.className = "fa-solid fa-sun";
+    localStorage.setItem("tg_mock_theme", "dark");
+    showToast("เปลี่ยนเป็นโหมดมืดเรียบร้อย", "success");
+  } else {
+    body.classList.add("light-theme");
+    icon.className = "fa-solid fa-moon";
+    localStorage.setItem("tg_mock_theme", "light");
+    showToast("เปลี่ยนเป็นโหมดสว่างเรียบร้อย", "success");
+  }
+  // Re-render charts to adjust gridline colors if needed
+  if (selectedMockName) {
+    renderCharts();
+  }
+}
+
+// Toast Notifications
+function showToast(message, type = "info") {
+  const container = document.getElementById("toast-container");
+  const toast = document.createElement("div");
+  toast.className = `toast ${type}`;
+  
+  let icon = "fa-circle-info";
+  if (type === "success") icon = "fa-circle-check";
+  if (type === "error") icon = "fa-circle-xmark";
+  if (type === "warning") icon = "fa-triangle-exclamation";
+  
+  toast.innerHTML = `
+    <i class="fa-solid ${icon}"></i>
+    <span>${message}</span>
+  `;
+  container.appendChild(toast);
+  
+  setTimeout(() => {
+    toast.classList.add("fade-out");
+    toast.addEventListener("animationend", () => {
+      toast.remove();
+    });
+  }, 3000);
+}
+
+// Data Fetching & Sync
+async function loadData() {
+  setSyncStatus("loading", "กำลังดึงข้อมูล...");
+  
+  if (apiUrl) {
+    try {
+      const response = await fetch(apiUrl);
+      if (!response.ok) throw new Error("HTTP error " + response.status);
+      const data = await response.json();
+      
+      db = data;
+      localStorage.setItem("tg_mock_db_cache", JSON.stringify(db));
+      setSyncStatus("online", "ซิงค์กับ Google Sheet แล้ว");
+      showToast("ดึงข้อมูลจาก Google Sheets สำเร็จ", "success");
+    } catch (error) {
+      console.error("Fetch from API failed, using cache:", error);
+      loadOfflineFallback("ไม่สามารถเชื่อมต่อ Google Sheets ได้ ใช้ข้อมูลสำรอง");
+    }
+  } else {
+    loadOfflineFallback("ยังไม่ได้ตั้งค่า API ซิงค์ข้อมูล");
+  }
+  
+  initializeMockOptions();
+}
+
+function loadOfflineFallback(warningMsg) {
+  const cachedDb = localStorage.getItem("tg_mock_db_cache");
+  if (cachedDb) {
+    db = JSON.parse(cachedDb);
+    setSyncStatus("offline", "โหมดออฟไลน์ (ใช้ข้อมูลในเครื่อง)");
+  } else {
+    // If no cache, load default data.json asynchronously
+    fetch("data.json")
+      .then(res => res.json())
+      .then(data => {
+        db = data;
+        localStorage.setItem("tg_mock_db_cache", JSON.stringify(db));
+        setSyncStatus("offline", "โหลดข้อมูลเริ่มต้นสำเร็จ");
+        initializeMockOptions();
+      })
+      .catch(err => {
+        console.error("Loading data.json failed:", err);
+        setSyncStatus("error", "ไม่พบข้อมูล กรุณาสร้าง Mock ใหม่");
+        showToast("ไม่พบข้อมูลเดิม กรุณาสร้างการสอบใหม่ในระบบ", "error");
+      });
+    return;
+  }
+  showToast(warningMsg, "warning");
+}
+
+function setSyncStatus(status, text) {
+  const badge = document.getElementById("sync-status-badge");
+  badge.className = `sync-badge ${status}`;
+  
+  let icon = "fa-cloud";
+  if (status === "loading") icon = "fa-spinner fa-spin";
+  if (status === "online") icon = "fa-cloud-arrow-up";
+  if (status === "offline") icon = "fa-cloud-arrow-down";
+  if (status === "error") icon = "fa-triangle-exclamation";
+  
+  badge.innerHTML = `<i class="fa-solid ${icon}"></i> <span>${text}</span>`;
+}
+
+function initializeMockOptions() {
+  const select = document.getElementById("mock-selector");
+  const manageSelect = document.getElementById("score-mock-select");
+  const editSelect = document.getElementById("edit-mock-selector");
+  
+  select.innerHTML = "";
+  manageSelect.innerHTML = "";
+  if (editSelect) editSelect.innerHTML = "";
+  
+  if (db.mocks.length === 0) {
+    select.innerHTML = `<option value="">-- ไม่พบข้อมูล Mock --</option>`;
+    manageSelect.innerHTML = `<option value="">-- ไม่พบข้อมูล Mock --</option>`;
+    if (editSelect) editSelect.innerHTML = `<option value="">-- ไม่พบข้อมูล Mock --</option>`;
+    return;
+  }
+  
+  // Sort mocks alphabetically or chronologically
+  db.mocks.sort((a, b) => b.name.localeCompare(a.name));
+  
+  db.mocks.forEach(mock => {
+    const opt = document.createElement("option");
+    opt.value = mock.name;
+    opt.textContent = mock.name;
+    select.appendChild(opt);
+    
+    const optManage = document.createElement("option");
+    optManage.value = mock.name;
+    optManage.textContent = mock.name;
+    manageSelect.appendChild(optManage);
+    
+    if (editSelect) {
+      const optEdit = document.createElement("option");
+      optEdit.value = mock.name;
+      optEdit.textContent = mock.name;
+      editSelect.appendChild(optEdit);
+    }
+  });
+  
+  // Select default mock
+  if (!selectedMockName || !db.mocks.find(m => m.name === selectedMockName)) {
+    selectedMockName = db.mocks[0].name;
+  }
+  
+  select.value = selectedMockName;
+  manageSelect.value = selectedMockName;
+  
+  onMockChanged();
+}
+
+function onMockChanged() {
+  selectedMockName = document.getElementById("mock-selector").value;
+  document.getElementById("score-mock-select").value = selectedMockName;
+  
+  const currentMock = db.mocks.find(m => m.name === selectedMockName);
+  if (!currentMock) return;
+  
+  // Render Candidate Options for Individual Tab
+  const candSelect = document.getElementById("candidate-selector");
+  candSelect.innerHTML = "";
+  
+  const mockScores = db.scores.filter(s => s.mockName === selectedMockName);
+  
+  if (mockScores.length === 0) {
+    candSelect.innerHTML = `<option value="">-- ไม่มีผู้กรอกคะแนน --</option>`;
+    selectedCandidateName = "";
+  } else {
+    mockScores.sort((a, b) => a.candidateName.localeCompare(b.candidateName));
+    mockScores.forEach(score => {
+      const opt = document.createElement("option");
+      opt.value = score.candidateName;
+      opt.textContent = score.candidateName;
+      candSelect.appendChild(opt);
+    });
+    
+    if (!selectedCandidateName || !mockScores.find(s => s.candidateName === selectedCandidateName)) {
+      selectedCandidateName = mockScores[0].candidateName;
+    }
+    candSelect.value = selectedCandidateName;
+  }
+  
+  // Render Leaderboard & Insights
+  calculateAndRenderLeaderboard();
+  renderRadarSelector();
+  renderHeatmap();
+  renderIndividualReport();
+  renderCharts();
+  
+  // Dynamic Score Fields in Manage Tab
+  generateScoreInputFields();
+}
+
+// Mathematical Calculations
+function getMockDataForCandidate(mock, candidateScore) {
+  let rawTotal = 0;
+  let rawMax = 0;
+  let weightedTotal = 0;
+  let N = mock.parts.length;
+  
+  mock.parts.forEach(part => {
+    let score = candidateScore.scores[part.name];
+    if (score === undefined || score === null) {
+      score = 0;
+    }
+    rawTotal += score;
+    rawMax += part.max;
+    
+    // Scale each part to max of 10
+    if (part.max > 0) {
+      weightedTotal += (score / part.max) * 10;
+    }
+  });
+  
+  let rawPercentage = rawMax > 0 ? (rawTotal / rawMax) * 100 : 0;
+  let weightedPercentage = N > 0 ? (weightedTotal / (N * 10)) * 100 : 0;
+  
+  return {
+    rawTotal,
+    rawMax,
+    rawPercentage,
+    weightedTotal,
+    weightedMax: N * 10,
+    weightedPercentage
+  };
+}
+
+function calculateAndRenderLeaderboard() {
+  const currentMock = db.mocks.find(m => m.name === selectedMockName);
+  if (!currentMock) return;
+  
+  const mockScores = db.scores.filter(s => s.mockName === selectedMockName);
+  
+  const processedScores = mockScores.map(candScore => {
+    const stats = getMockDataForCandidate(currentMock, candScore);
+    return {
+      candidateName: candScore.candidateName,
+      ...stats
+    };
+  });
+  
+  // Sort
+  if (rankingType === "raw") {
+    processedScores.sort((a, b) => b.rawTotal - a.rawTotal || b.rawPercentage - a.rawPercentage);
+  } else {
+    processedScores.sort((a, b) => b.weightedTotal - a.weightedTotal || b.weightedPercentage - a.weightedPercentage);
+  }
+  
+  // Calculate summary widgets
+  renderSummaryWidgets(processedScores, currentMock);
+  
+  // Render Table
+  const tbody = document.getElementById("leaderboard-tbody");
+  tbody.innerHTML = "";
+  
+  if (processedScores.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 2rem; color: var(--text-muted);">ยังไม่มีผู้กรอกคะแนนสำหรับการสอบนี้</td></tr>`;
+    return;
+  }
+  
+  processedScores.forEach((row, index) => {
+    const rank = index + 1;
+    let rankHtml = "";
+    if (rank === 1) rankHtml = `<span class="rank-badge rank-1">1</span>`;
+    else if (rank === 2) rankHtml = `<span class="rank-badge rank-2">2</span>`;
+    else if (rank === 3) rankHtml = `<span class="rank-badge rank-3">3</span>`;
+    else rankHtml = rank;
+    
+    const isSelected = row.candidateName === selectedCandidateName ? "style='background-color: var(--color-primary-glow);'" : "";
+    
+    const percentage = rankingType === "raw" ? row.rawPercentage : row.weightedPercentage;
+    const totalScoreStr = rankingType === "raw" ? `${row.rawTotal} / ${row.rawMax}` : `${row.weightedTotal.toFixed(2)} / ${row.weightedMax}`;
+    
+    const tr = document.createElement("tr");
+    if (isSelected) tr.setAttribute("style", "background-color: rgba(99, 102, 241, 0.1);");
+    tr.innerHTML = `
+      <td class="rank-cell">${rankHtml}</td>
+      <td class="name-cell" onclick="selectCandidate('${row.candidateName}')">${row.candidateName}</td>
+      <td class="score-cell">${totalScoreStr}</td>
+      <td class="score-cell">${percentage.toFixed(1)}%</td>
+      <td class="progress-bar-cell">
+        <div class="progress-track">
+          <div class="progress-fill" style="width: ${percentage}%"></div>
+        </div>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function selectCandidate(name) {
+  selectedCandidateName = name;
+  document.getElementById("candidate-selector").value = name;
+  
+  // Update UI and switch to Tab 3 (Individual View)
+  switchTab("individual");
+  calculateAndRenderLeaderboard(); // refresh selection highlite
+  renderIndividualReport();
+}
+
+function renderSummaryWidgets(processedScores, mock) {
+  // Total Candidates
+  document.getElementById("widget-candidates").textContent = processedScores.length;
+  
+  // Average Score
+  if (processedScores.length > 0) {
+    const avgPercent = processedScores.reduce((acc, row) => acc + (rankingType === "raw" ? row.rawPercentage : row.weightedPercentage), 0) / processedScores.length;
+    document.getElementById("widget-avg-score").innerHTML = `${avgPercent.toFixed(1)} <span class="card-value-unit">%</span>`;
+  } else {
+    document.getElementById("widget-avg-score").innerHTML = `0.0 <span class="card-value-unit">%</span>`;
+  }
+  
+  // Find Strongest and Weakest Sub-tests based on group average percent
+  const mockScores = db.scores.filter(s => s.mockName === selectedMockName);
+  if (mockScores.length > 0 && mock.parts.length > 0) {
+    const partAverages = mock.parts.map(part => {
+      let sum = 0;
+      mockScores.forEach(s => {
+        sum += (s.scores[part.name] || 0);
+      });
+      const avg = sum / mockScores.length;
+      const pct = part.max > 0 ? (avg / part.max) * 100 : 0;
+      return { name: part.name, pct };
+    });
+    
+    partAverages.sort((a, b) => b.pct - a.pct);
+    
+    const strongest = partAverages[0];
+    const weakest = partAverages[partAverages.length - 1];
+    
+    document.getElementById("widget-strongest").textContent = `${strongest.name} (${strongest.pct.toFixed(0)}%)`;
+    document.getElementById("widget-weakest").textContent = `${weakest.name} (${weakest.pct.toFixed(0)}%)`;
+  } else {
+    document.getElementById("widget-strongest").textContent = "-";
+    document.getElementById("widget-weakest").textContent = "-";
+  }
+}
+
+// Chart Rendering
+function renderCharts() {
+  renderBarChart();
+  renderRadarChart();
+}
+
+function renderBarChart() {
+  const currentMock = db.mocks.find(m => m.name === selectedMockName);
+  if (!currentMock) return;
+  
+  const mockScores = db.scores.filter(s => s.mockName === selectedMockName);
+  const processedScores = mockScores.map(candScore => {
+    const stats = getMockDataForCandidate(currentMock, candScore);
+    return {
+      name: candScore.candidateName,
+      val: rankingType === "raw" ? stats.rawPercentage : stats.weightedPercentage,
+      displayVal: rankingType === "raw" ? stats.rawTotal : stats.weightedTotal
+    };
+  });
+  
+  // Sort by score
+  processedScores.sort((a, b) => b.val - a.val);
+  
+  const labels = processedScores.map(row => row.name);
+  const dataVals = processedScores.map(row => row.val);
+  const rawValues = processedScores.map(row => row.displayVal);
+  
+  const ctx = document.getElementById("barChart").getContext("2d");
+  
+  if (barChartInstance) {
+    barChartInstance.destroy();
+  }
+  
+  const isDark = !document.body.classList.contains("light-theme");
+  const textColor = isDark ? "#9ca3af" : "#4b5563";
+  const gridColor = isDark ? "rgba(255, 255, 255, 0.06)" : "rgba(0, 0, 0, 0.06)";
+  
+  barChartInstance = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: `คะแนนเฉลี่ยร้อยละ (${rankingType === "raw" ? "คะแนนดิบ" : "ถ่วงน้ำหนัก"})`,
+        data: dataVals,
+        backgroundColor: 'rgba(99, 102, 241, 0.65)',
+        borderColor: '#6366f1',
+        borderWidth: 2,
+        borderRadius: 8,
+        hoverBackgroundColor: 'rgba(168, 85, 247, 0.8)'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true,
+          max: 100,
+          grid: { color: gridColor },
+          ticks: {
+            color: textColor,
+            callback: value => `${value}%`
+          }
+        },
+        x: {
+          grid: { display: false },
+          ticks: { color: textColor }
+        }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const idx = context.dataIndex;
+              const suffix = rankingType === "raw" ? " คะแนนดิบ" : " คะแนนถ่วงน้ำหนัก";
+              const rawVal = typeof rawValues[idx] === 'number' ? rawValues[idx].toFixed(1) : rawValues[idx];
+              return `ร้อยละ: ${context.parsed.y.toFixed(1)}% (${rawVal}${suffix})`;
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+function renderRadarSelector() {
+  const container = document.getElementById("radar-candidates-list");
+  container.innerHTML = "";
+  
+  const mockScores = db.scores.filter(s => s.mockName === selectedMockName);
+  if (mockScores.length === 0) return;
+  
+  // We want to store selected check states, defaulting to show at least the selectedCandidate and average
+  mockScores.forEach((s, idx) => {
+    const div = document.createElement("div");
+    const activeClass = s.candidateName === selectedCandidateName ? "active" : "";
+    const isChecked = s.candidateName === selectedCandidateName ? "checked" : "";
+    
+    // Choose colors dynamically for candidates
+    const color = getCandidateColor(s.candidateName);
+    
+    div.innerHTML = `
+      <label class="checkbox-label ${activeClass}" id="lbl-check-${s.candidateName}">
+        <input type="checkbox" value="${s.candidateName}" ${isChecked} onchange="updateRadarChart()">
+        <span class="color-dot" style="background-color: ${color};"></span>
+        <span>${s.candidateName}</span>
+      </label>
+    `;
+    container.appendChild(div);
+  });
+}
+
+function getCandidateColor(name) {
+  // Simple deterministic color generator
+  const colors = [
+    '#6366f1', // Indigo
+    '#ec4899', // Pink
+    '#10b981', // Emerald
+    '#f59e0b', // Amber
+    '#3b82f6', // Blue
+    '#8b5cf6', // Violet
+    '#ef4444', // Red
+    '#06b6d4', // Cyan
+    '#14b8a6', // Teal
+    '#f97316'  // Orange
+  ];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const index = Math.abs(hash) % colors.length;
+  return colors[index];
+}
+
+function updateRadarChart() {
+  // Sync label active class style
+  const checkboxes = document.querySelectorAll("#radar-candidates-list input[type='checkbox']");
+  checkboxes.forEach(cb => {
+    const lbl = document.getElementById(`lbl-check-${cb.value}`);
+    if (cb.checked) {
+      lbl.classList.add("active");
+    } else {
+      lbl.classList.remove("active");
+    }
+  });
+  
+  renderRadarChart();
+}
+
+function renderRadarChart() {
+  const currentMock = db.mocks.find(m => m.name === selectedMockName);
+  if (!currentMock || currentMock.parts.length === 0) return;
+  
+  const mockScores = db.scores.filter(s => s.mockName === selectedMockName);
+  
+  // Find which candidates are checked
+  const checkedCandidates = [];
+  const checkboxes = document.querySelectorAll("#radar-candidates-list input[type='checkbox']");
+  checkboxes.forEach(cb => {
+    if (cb.checked) checkedCandidates.push(cb.value);
+  });
+  
+  const labels = currentMock.parts.map(p => p.name);
+  const datasets = [];
+  
+  const isDark = !document.body.classList.contains("light-theme");
+  const textColor = isDark ? "#9ca3af" : "#4b5563";
+  const gridColor = isDark ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.08)";
+  
+  // 1. Group Average Dataset (Scaled to 10)
+  if (mockScores.length > 0) {
+    const avgScores = currentMock.parts.map(part => {
+      let sum = 0;
+      mockScores.forEach(s => {
+        sum += (s.scores[part.name] || 0);
+      });
+      const avg = sum / mockScores.length;
+      return part.max > 0 ? (avg / part.max) * 10 : 0;
+    });
+    
+    datasets.push({
+      label: 'ค่าเฉลี่ยกลุ่ม (Group Avg)',
+      data: avgScores,
+      backgroundColor: 'rgba(255, 255, 255, 0.03)',
+      borderColor: isDark ? '#4b5563' : '#9ca3af',
+      borderWidth: 2,
+      borderDash: [5, 5],
+      pointBackgroundColor: isDark ? '#4b5563' : '#9ca3af',
+      pointRadius: 2
+    });
+  }
+  
+  // 2. Candidate Datasets (Scaled to 10)
+  checkedCandidates.forEach(candName => {
+    const candScore = mockScores.find(s => s.candidateName === candName);
+    if (!candScore) return;
+    
+    const scaledScores = currentMock.parts.map(part => {
+      const val = candScore.scores[part.name] || 0;
+      return part.max > 0 ? (val / part.max) * 10 : 0;
+    });
+    
+    const color = getCandidateColor(candName);
+    
+    datasets.push({
+      label: candName,
+      data: scaledScores,
+      backgroundColor: `${color}1A`, // opacity hex 1A = 10%
+      borderColor: color,
+      borderWidth: 3,
+      pointBackgroundColor: color,
+      pointHoverRadius: 6,
+      pointRadius: 4
+    });
+  });
+  
+  const ctx = document.getElementById("radarChart").getContext("2d");
+  if (radarChartInstance) {
+    radarChartInstance.destroy();
+  }
+  
+  radarChartInstance = new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels: labels,
+      datasets: datasets
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        r: {
+          min: 0,
+          max: 10,
+          ticks: {
+            stepSize: 2,
+            color: textColor,
+            backdropColor: 'transparent',
+            z: 10
+          },
+          grid: { color: gridColor },
+          angleLines: { color: gridColor },
+          pointLabels: {
+            color: textColor,
+            font: {
+              family: varStyle('--font-heading'),
+              size: 11,
+              weight: '500'
+            }
+          }
+        }
+      },
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: { color: textColor, font: { family: varStyle('--font-body') } }
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const label = context.dataset.label;
+              const scoreScale10 = context.parsed.r;
+              
+              // Find raw score info
+              const partName = context.label;
+              const part = currentMock.parts.find(p => p.name === partName);
+              const maxVal = part ? part.max : 10;
+              
+              const rawScore = (scoreScale10 / 10) * maxVal;
+              return `${label}: ${scoreScale10.toFixed(1)}/10 (${rawScore.toFixed(1)}/${maxVal})`;
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+function varStyle(varName) {
+  return getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+}
+
+// Heatmap Breakdown Rendering
+function renderHeatmap() {
+  const currentMock = db.mocks.find(m => m.name === selectedMockName);
+  if (!currentMock) return;
+  
+  const mockScores = db.scores.filter(s => s.mockName === selectedMockName);
+  
+  // Header row
+  const table = document.getElementById("heatmap-table");
+  table.innerHTML = "";
+  
+  const thead = document.createElement("thead");
+  const headerTr = document.createElement("tr");
+  headerTr.innerHTML = `<th>ผู้สอบ</th>`;
+  currentMock.parts.forEach(part => {
+    headerTr.innerHTML += `<th>${part.name}<br><small style="color:var(--text-muted);font-weight:normal;">เต็ม ${part.max}</small></th>`;
+  });
+  thead.appendChild(headerTr);
+  table.appendChild(thead);
+  
+  // Rows for candidates
+  const tbody = document.createElement("tbody");
+  
+  if (mockScores.length === 0) {
+    const emptyTr = document.createElement("tr");
+    emptyTr.innerHTML = `<td colspan="${currentMock.parts.length + 1}" style="text-align:center; padding: 2rem; color: var(--text-muted);">ยังไม่มีผู้สอบ</td>`;
+    tbody.appendChild(emptyTr);
+    table.appendChild(tbody);
+    return;
+  }
+  
+  // Sort candidates by name
+  mockScores.sort((a, b) => a.candidateName.localeCompare(b.candidateName));
+  
+  mockScores.forEach(s => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td class="name-cell" onclick="selectCandidate('${s.candidateName}')">${s.candidateName}</td>`;
+    
+    currentMock.parts.forEach(part => {
+      const scoreVal = s.scores[part.name] || 0;
+      const pct = part.max > 0 ? (scoreVal / part.max) * 100 : 0;
+      
+      let levelClass = "hm-level-1";
+      if (pct >= 80) levelClass = "hm-level-3";
+      else if (pct >= 50) levelClass = "hm-level-2";
+      
+      tr.innerHTML += `<td class="heatmap-cell ${levelClass}" title="${pct.toFixed(1)}%">${scoreVal}</td>`;
+    });
+    tbody.appendChild(tr);
+  });
+  table.appendChild(tbody);
+}
+
+// Individual Analytics Report (Tab 3)
+function renderIndividualReport() {
+  const currentMock = db.mocks.find(m => m.name === selectedMockName);
+  const indPanel = document.getElementById("individual-analytics-panel");
+  const noIndPanel = document.getElementById("no-individual-panel");
+  
+  if (!currentMock || !selectedCandidateName) {
+    indPanel.style.display = "none";
+    noIndPanel.style.display = "block";
+    return;
+  }
+  
+  indPanel.style.display = "grid";
+  noIndPanel.style.display = "none";
+  
+  const mockScores = db.scores.filter(s => s.mockName === selectedMockName);
+  const candScore = mockScores.find(s => s.candidateName === selectedCandidateName);
+  
+  if (!candScore) {
+    indPanel.style.display = "none";
+    noIndPanel.style.display = "block";
+    return;
+  }
+  
+  // Calculate rankings to show candidate position
+  const rankingList = mockScores.map(cs => {
+    const stats = getMockDataForCandidate(currentMock, cs);
+    return {
+      candidateName: cs.candidateName,
+      rawTotal: stats.rawTotal,
+      weightedTotal: stats.weightedTotal
+    };
+  });
+  
+  // Sort
+  rankingList.sort((a, b) => b.rawTotal - a.rawTotal);
+  const rankRaw = rankingList.findIndex(r => r.candidateName === selectedCandidateName) + 1;
+  
+  rankingList.sort((a, b) => b.weightedTotal - a.weightedTotal);
+  const rankWeighted = rankingList.findIndex(r => r.candidateName === selectedCandidateName) + 1;
+  
+  const stats = getMockDataForCandidate(currentMock, candScore);
+  
+  // Candidate Header Details
+  document.getElementById("ind-name").textContent = selectedCandidateName;
+  document.getElementById("ind-avatar").textContent = selectedCandidateName.charAt(0).toUpperCase();
+  document.getElementById("ind-mock-title").textContent = selectedMockName;
+  
+  document.getElementById("ind-rank").innerHTML = `${rankingType === "raw" ? rankRaw : rankWeighted} <span class="card-value-unit">/ ${mockScores.length}</span>`;
+  document.getElementById("ind-raw").innerHTML = `${stats.rawTotal} <span class="card-value-unit">/ ${stats.rawMax}</span>`;
+  document.getElementById("ind-weighted").innerHTML = `${stats.weightedTotal.toFixed(1)} <span class="card-value-unit">/ ${stats.weightedMax}</span>`;
+  document.getElementById("ind-avg").innerHTML = `${(rankingType === "raw" ? stats.rawPercentage : stats.weightedPercentage).toFixed(1)}%`;
+  
+  // Strengths & Weaknesses (Top 3, Bottom 3)
+  const partPerformance = currentMock.parts.map(part => {
+    const val = candScore.scores[part.name] || 0;
+    const pct = part.max > 0 ? (val / part.max) * 100 : 0;
+    return { name: part.name, score: val, max: part.max, pct };
+  });
+  
+  // Sort parts by performance percentage
+  partPerformance.sort((a, b) => b.pct - a.pct);
+  
+  // Rendering strengths (Top 3)
+  const strengthsContainer = document.getElementById("strengths-list");
+  strengthsContainer.innerHTML = "";
+  const strengths = partPerformance.slice(0, 3);
+  strengths.forEach(st => {
+    const div = document.createElement("div");
+    div.className = "insight-item";
+    div.innerHTML = `
+      <div class="insight-icon strength-icon"><i class="fa-solid fa-circle-arrow-up"></i></div>
+      <div class="insight-details">
+        <h4>${st.name} <small style="color:var(--color-success); font-weight:bold;">${st.pct.toFixed(0)}%</small></h4>
+        <p>ทำได้ ${st.score} จากคะแนนเต็ม ${st.max} คะแนน</p>
+      </div>
+    `;
+    strengthsContainer.appendChild(div);
+  });
+  
+  // Rendering weaknesses (Bottom 3)
+  const weaknessesContainer = document.getElementById("weaknesses-list");
+  weaknessesContainer.innerHTML = "";
+  // Weaknesses should be taken from the bottom, so reverse slice
+  const weaknesses = partPerformance.slice(-3).reverse(); // Reverse so worst score is first
+  weaknesses.forEach(wk => {
+    const div = document.createElement("div");
+    div.className = "insight-item";
+    div.innerHTML = `
+      <div class="insight-icon weakness-icon"><i class="fa-solid fa-circle-arrow-down"></i></div>
+      <div class="insight-details">
+        <h4>${wk.name} <small style="color:var(--color-danger); font-weight:bold;">${wk.pct.toFixed(0)}%</small></h4>
+        <p>ทำได้ ${wk.score} จากคะแนนเต็ม ${wk.max} คะแนน</p>
+      </div>
+    `;
+    weaknessesContainer.appendChild(div);
+  });
+
+  
+  // Target Progress Calculation
+  const targetKey = `${selectedMockName}|||${selectedCandidateName}`;
+  const targetVal = targetScores[targetKey] || Math.round(stats.rawMax * 0.8); // Default target is 80%
+  document.getElementById("target-score-input").value = targetVal;
+  
+  const targetPct = targetVal > 0 ? (stats.rawTotal / targetVal) * 100 : 0;
+  
+  document.getElementById("target-progress-text").textContent = `${stats.rawTotal} / ${targetVal}`;
+  document.getElementById("target-progress-percent").textContent = `${targetPct.toFixed(0)}%`;
+  
+  const fill = document.getElementById("target-progress-fill");
+  fill.style.width = `${Math.min(targetPct, 100)}%`;
+  if (targetPct >= 100) {
+    fill.style.background = "linear-gradient(90deg, var(--color-success), #059669)";
+    document.getElementById("target-success-badge").style.display = "inline";
+  } else {
+    fill.style.background = "linear-gradient(90deg, var(--color-primary), var(--color-secondary))";
+    document.getElementById("target-success-badge").style.display = "none";
+  }
+}
+
+function updateTargetScore() {
+  const val = parseInt(document.getElementById("target-score-input").value) || 0;
+  const targetKey = `${selectedMockName}|||${selectedCandidateName}`;
+  targetScores[targetKey] = val;
+  localStorage.setItem("tg_mock_targets", JSON.stringify(targetScores));
+  renderIndividualReport();
+  showToast("อัปเดตเป้าหมายคะแนนแล้ว", "success");
+}
+
+function printReport() {
+  window.print();
+}
+
+// Data Entry: Dynamically Populate Input Fields
+function generateScoreInputFields() {
+  const selectMock = document.getElementById("score-mock-select").value;
+  const container = document.getElementById("dynamic-score-inputs");
+  container.innerHTML = "";
+  
+  if (!selectMock) return;
+  const mock = db.mocks.find(m => m.name === selectMock);
+  if (!mock) return;
+  
+  mock.parts.forEach(part => {
+    const div = document.createElement("div");
+    div.className = "form-group";
+    div.innerHTML = `
+      <label>${part.name} (คะแนนเต็ม ${part.max})</label>
+      <input type="number" class="form-control score-part-input" data-part="${part.name}" max="${part.max}" min="0" placeholder="กรอกคะแนนที่ได้">
+    `;
+    container.appendChild(div);
+  });
+  
+  // If we already have scores for the selected candidate + mock, prefill!
+  fillCandidateScoresToForm();
+}
+
+function fillCandidateScoresToForm() {
+  const selectMock = document.getElementById("score-mock-select").value;
+  const candidateName = document.getElementById("score-candidate-input").value.trim();
+  const deleteBtn = document.getElementById("btn-delete-score");
+  
+  if (!selectMock || !candidateName) {
+    if (deleteBtn) deleteBtn.style.display = "none";
+    const inputs = document.querySelectorAll(".score-part-input");
+    inputs.forEach(input => {
+      input.value = "";
+    });
+    return;
+  }
+  
+  const existingScore = db.scores.find(s => s.mockName === selectMock && s.candidateName === candidateName);
+  const inputs = document.querySelectorAll(".score-part-input");
+  
+  inputs.forEach(input => {
+    const partName = input.getAttribute("data-part");
+    if (existingScore && existingScore.scores[partName] !== undefined) {
+      input.value = existingScore.scores[partName];
+    } else {
+      input.value = "";
+    }
+  });
+  
+  if (deleteBtn) {
+    if (existingScore) {
+      deleteBtn.style.display = "inline-flex";
+    } else {
+      deleteBtn.style.display = "none";
+    }
+  }
+}
+
+// CRUD Operations in Frontend/API
+async function submitNewMock(event) {
+  event.preventDefault();
+  
+  const mockName = document.getElementById("new-mock-name").value.trim();
+  if (!mockName) {
+    showToast("กรุณาระบุชื่อการสอบ Mock", "error");
+    return;
+  }
+  
+  const rows = document.querySelectorAll("#parts-list-container .dynamic-row");
+  const parts = [];
+  let hasError = false;
+  
+  rows.forEach(row => {
+    const nameInput = row.querySelector(".part-name-input").value.trim();
+    const maxInput = parseInt(row.querySelector(".part-max-input").value) || 0;
+    
+    if (nameInput) {
+      if (maxInput <= 0) {
+        showToast("คะแนนเต็มต้องมีค่ามากกว่า 0", "error");
+        hasError = true;
+      }
+      parts.push({ name: nameInput, max: maxInput });
+    }
+  });
+  
+  if (hasError) return;
+  
+  if (parts.length === 0) {
+    showToast("กรุณาเพิ่มหัวข้อสอบอย่างน้อย 1 หัวข้อ", "error");
+    return;
+  }
+  
+  setSyncStatus("loading", "กำลังบันทึก Mock...");
+  
+  if (mockFormMode === "edit") {
+    // Calculate renamed parts by index mapping
+    let partRenames = {};
+    for (let i = 0; i < Math.min(editingOriginalParts.length, parts.length); i++) {
+      if (editingOriginalParts[i].name !== parts[i].name) {
+        partRenames[editingOriginalParts[i].name] = parts[i].name;
+      }
+    }
+    
+    const payload = {
+      action: "editMock",
+      oldMockName: editingOriginalMockName,
+      newMockName: mockName,
+      parts: parts,
+      partRenames: partRenames
+    };
+    
+    if (apiUrl) {
+      try {
+        const response = await fetch(apiUrl, {
+          method: "POST",
+          body: JSON.stringify(payload),
+          headers: { "Content-Type": "text/plain" }
+        });
+        const res = await response.json();
+        if (!res.success) throw new Error(res.error);
+        showToast(`อัปเดตแก้ไข Mock ${mockName} สำเร็จ`, "success");
+      } catch (err) {
+        console.error(err);
+        showToast("บันทึกออนไลน์ไม่สำเร็จ บันทึกในบราวเซอร์ชั่วคราว", "warning");
+        editMockLocally(editingOriginalMockName, mockName, parts, partRenames);
+      }
+    } else {
+      editMockLocally(editingOriginalMockName, mockName, parts, partRenames);
+      showToast(`อัปเดต Mock ${mockName} ลงเครื่องแล้ว (โหมดออฟไลน์)`, "success");
+    }
+  } else {
+    // Create Mode (Add Mock)
+    const payload = {
+      action: "addMock",
+      mockName,
+      parts
+    };
+    
+    if (apiUrl) {
+      try {
+        const response = await fetch(apiUrl, {
+          method: "POST",
+          body: JSON.stringify(payload),
+          headers: { "Content-Type": "text/plain" }
+        });
+        const res = await response.json();
+        if (!res.success) throw new Error(res.error);
+        showToast(`สร้าง Mock ${mockName} เรียบร้อย`, "success");
+      } catch (err) {
+        console.error(err);
+        showToast("บันทึกออนไลน์ไม่สำเร็จ บันทึกในบราวเซอร์ชั่วคราว", "warning");
+        saveMockLocally(mockName, parts);
+      }
+    } else {
+      saveMockLocally(mockName, parts);
+      showToast(`สร้าง Mock ${mockName} ลงเครื่องแล้ว (โหมดออฟไลน์)`, "success");
+    }
+  }
+  
+  // Reset and return to create mode
+  setMockFormMode("create");
+  
+  // Reload Data
+  await loadData();
+}
+
+// Mode toggler for Mock creation / editing form
+function setMockFormMode(mode) {
+  mockFormMode = mode;
+  
+  const createBtn = document.getElementById("mode-create-btn");
+  const editBtn = document.getElementById("mode-edit-btn");
+  const editGroup = document.getElementById("edit-mock-select-group");
+  const mockHeader = document.getElementById("mock-form-header");
+  const nameLabel = document.getElementById("mock-name-label");
+  const nameInput = document.getElementById("new-mock-name");
+  const submitBtn = document.querySelector("#create-mock-form button[type='submit']");
+  
+  if (mode === "create") {
+    createBtn.classList.add("active");
+    editBtn.classList.remove("active");
+    if (editGroup) editGroup.style.display = "none";
+    mockHeader.innerHTML = `<i class="fa-solid fa-folder-plus" style="color:var(--color-primary);"></i> 1. สร้างการสอบ Mock ใหม่`;
+    nameLabel.textContent = "ชื่อชุดข้อสอบ Mock";
+    nameInput.placeholder = "เช่น Mock TG5, TCAS 69";
+    submitBtn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> บันทึกข้อมูลข้อสอบ`;
+    
+    // Reset Form
+    nameInput.value = "";
+    document.getElementById("parts-list-container").innerHTML = "";
+    addPartRow();
+    editingOriginalMockName = "";
+    editingOriginalParts = [];
+  } else {
+    createBtn.classList.remove("active");
+    editBtn.classList.add("active");
+    if (editGroup) editGroup.style.display = "block";
+    mockHeader.innerHTML = `<i class="fa-solid fa-file-pen" style="color:var(--color-primary);"></i> 1. แก้ไขข้อมูลชุดข้อสอบ Mock`;
+    nameLabel.textContent = "ชื่อชุดข้อสอบ Mock (ใหม่)";
+    submitBtn.innerHTML = `<i class="fa-solid fa-pen-to-square"></i> บันทึกการแก้ไขข้อสอบ`;
+    
+    loadMockToEdit();
+  }
+}
+
+function loadMockToEdit() {
+  const selector = document.getElementById("edit-mock-selector");
+  if (!selector) return;
+  const mockName = selector.value;
+  if (!mockName) return;
+  
+  const mock = db.mocks.find(m => m.name === mockName);
+  if (!mock) return;
+  
+  editingOriginalMockName = mock.name;
+  editingOriginalParts = JSON.parse(JSON.stringify(mock.parts)); // Deep copy
+  
+  document.getElementById("new-mock-name").value = mock.name;
+  
+  const container = document.getElementById("parts-list-container");
+  container.innerHTML = "";
+  mock.parts.forEach(part => {
+    addPartRow(part.name, part.max);
+  });
+}
+
+function editMockLocally(oldName, newName, parts, renames) {
+  // 1. Update mock name in local scores
+  if (oldName !== newName) {
+    db.scores.forEach(s => {
+      if (s.mockName === oldName) {
+        s.mockName = newName;
+      }
+    });
+  }
+  
+  // 2. Update part renames in local scores
+  if (renames && Object.keys(renames).length > 0) {
+    db.scores.forEach(s => {
+      if (s.mockName === newName) {
+        let updatedScores = {};
+        for (let partName in s.scores) {
+          let newPartName = renames[partName] !== undefined ? renames[partName] : partName;
+          updatedScores[newPartName] = s.scores[partName];
+        }
+        s.scores = updatedScores;
+      }
+    });
+  }
+  
+  // 3. Delete old mock and insert new
+  db.mocks = db.mocks.filter(m => m.name !== oldName);
+  db.mocks.push({ name: newName, parts });
+  
+  // 4. Remove scores of deleted parts
+  let partNamesList = parts.map(p => p.name);
+  db.scores.forEach(s => {
+    if (s.mockName === newName) {
+      let cleanedScores = {};
+      for (let partName in s.scores) {
+        if (partNamesList.includes(partName)) {
+          cleanedScores[partName] = s.scores[partName];
+        }
+      }
+      s.scores = cleanedScores;
+    }
+  });
+  
+  localStorage.setItem("tg_mock_db_cache", JSON.stringify(db));
+}
+
+function saveMockLocally(mockName, parts) {
+  // Overwrite existing locally
+  db.mocks = db.mocks.filter(m => m.name !== mockName);
+  db.mocks.push({ name: mockName, parts });
+  localStorage.setItem("tg_mock_db_cache", JSON.stringify(db));
+}
+
+async function submitScore(event) {
+  event.preventDefault();
+  
+  const mockName = document.getElementById("score-mock-select").value;
+  const candidateName = document.getElementById("score-candidate-input").value.trim();
+  
+  if (!mockName || !candidateName) {
+    showToast("กรุณาระบุชื่อการสอบและชื่อผู้สอบ", "error");
+    return;
+  }
+  
+  const inputs = document.querySelectorAll(".score-part-input");
+  const scores = {};
+  let valid = true;
+  
+  inputs.forEach(input => {
+    const partName = input.getAttribute("data-part");
+    const val = parseInt(input.value);
+    const maxVal = parseInt(input.getAttribute("max"));
+    
+    if (isNaN(val)) {
+      showToast(`กรุณากรอกคะแนนในส่วน ${partName}`, "error");
+      valid = false;
+      return;
+    }
+    if (val < 0 || val > maxVal) {
+      showToast(`คะแนนส่วน ${partName} ต้องอยู่ระหว่าง 0 ถึง ${maxVal}`, "error");
+      valid = false;
+      return;
+    }
+    
+    scores[partName] = val;
+  });
+  
+  if (!valid) return;
+  
+  setSyncStatus("loading", "กำลังบันทึกคะแนน...");
+  
+  const payload = {
+    action: "saveScore",
+    mockName,
+    candidateName,
+    scores
+  };
+  
+  if (apiUrl) {
+    try {
+      const response = await fetch(apiUrl, {
+        method: "POST",
+        body: JSON.stringify(payload),
+        headers: { "Content-Type": "text/plain" }
+      });
+      const res = await response.json();
+      if (!res.success) throw new Error(res.error);
+      showToast(`บันทึกคะแนนของ ${candidateName} สำเร็จ`, "success");
+    } catch (err) {
+      console.error(err);
+      showToast("บันทึกออนไลน์ไม่สำเร็จ บันทึกในบราวเซอร์ชั่วคราว", "warning");
+      saveScoreLocally(mockName, candidateName, scores);
+    }
+  } else {
+    saveScoreLocally(mockName, candidateName, scores);
+    showToast(`บันทึกคะแนนของ ${candidateName} ลงเครื่องแล้ว (โหมดออฟไลน์)`, "success");
+  }
+  
+  selectedCandidateName = candidateName; // Focus on this candidate
+  await loadData();
+}
+
+function saveScoreLocally(mockName, candidateName, scores) {
+  db.scores = db.scores.filter(s => !(s.mockName === mockName && s.candidateName === candidateName));
+  db.scores.push({ mockName, candidateName, scores });
+  localStorage.setItem("tg_mock_db_cache", JSON.stringify(db));
+}
+
+let deleteCandidateRef = "";
+let deleteMockRef = "";
+
+function confirmDeleteScore(candidateName, mockName) {
+  deleteCandidateRef = candidateName;
+  deleteMockRef = mockName || selectedMockName;
+  document.getElementById("delete-candidate-name-span").textContent = `${candidateName} (${deleteMockRef})`;
+  document.getElementById("delete-modal").classList.add("active");
+}
+
+function deleteScoreFromForm() {
+  const selectMock = document.getElementById("score-mock-select").value;
+  const candidateName = document.getElementById("score-candidate-input").value.trim();
+  if (selectMock && candidateName) {
+    confirmDeleteScore(candidateName, selectMock);
+  }
+}
+
+async function executeDeleteScore() {
+  if (!deleteCandidateRef || !deleteMockRef) return;
+  
+  setSyncStatus("loading", "กำลังลบคะแนน...");
+  const payload = {
+    action: "deleteScore",
+    mockName: deleteMockRef,
+    candidateName: deleteCandidateRef
+  };
+  
+  if (apiUrl) {
+    try {
+      const response = await fetch(apiUrl, {
+        method: "POST",
+        body: JSON.stringify(payload),
+        headers: { "Content-Type": "text/plain" }
+      });
+      const res = await response.json();
+      if (!res.success) throw new Error(res.error);
+      showToast("ลบคะแนนสำเร็จ", "success");
+    } catch (err) {
+      console.error(err);
+      showToast("ลบข้อมูลจากคลาวด์ไม่สำเร็จ ลบในเครื่องแทน", "warning");
+      deleteScoreLocally(deleteMockRef, deleteCandidateRef);
+    }
+  } else {
+    deleteScoreLocally(deleteMockRef, deleteCandidateRef);
+    showToast("ลบคะแนนในเครื่องสำเร็จ (โหมดออฟไลน์)", "success");
+  }
+  
+  if (selectedCandidateName === deleteCandidateRef) {
+    selectedCandidateName = "";
+  }
+  
+  // Clear form if the deleted score matches the currently inputted candidate in form
+  const currentFormCandidate = document.getElementById("score-candidate-input").value.trim();
+  const currentFormMock = document.getElementById("score-mock-select").value;
+  if (currentFormCandidate === deleteCandidateRef && currentFormMock === deleteMockRef) {
+    document.getElementById("score-candidate-input").value = "";
+    generateScoreInputFields(); // resets fields and toggles delete button to hidden
+  }
+  
+  deleteCandidateRef = "";
+  deleteMockRef = "";
+  closeModals();
+  await loadData();
+}
+
+function deleteScoreLocally(mockName, candidateName) {
+  db.scores = db.scores.filter(s => !(s.mockName === mockName && s.candidateName === candidateName));
+  localStorage.setItem("tg_mock_db_cache", JSON.stringify(db));
+}
+
+
+
+// Offline Export/Import
+function exportDataJson() {
+  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db, null, 2));
+  const downloadAnchor = document.createElement('a');
+  downloadAnchor.setAttribute("href", dataStr);
+  downloadAnchor.setAttribute("download", "data.json");
+  document.body.appendChild(downloadAnchor);
+  downloadAnchor.click();
+  downloadAnchor.remove();
+  showToast("ดาวน์โหลดไฟล์ data.json เรียบร้อย", "success");
+}
+
+function importDataJson(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const importedDb = JSON.parse(e.target.result);
+      if (importedDb.mocks && importedDb.scores) {
+        db = importedDb;
+        localStorage.setItem("tg_mock_db_cache", JSON.stringify(db));
+        showToast("นำเข้าข้อมูลเสร็จสิ้น", "success");
+        initializeMockOptions();
+      } else {
+        showToast("โครงสร้างไฟล์ JSON ไม่ถูกต้อง", "error");
+      }
+    } catch (err) {
+      showToast("อ่านไฟล์ล้มเหลว ตรวจสอบรูปแบบ JSON", "error");
+    }
+  };
+  reader.readAsText(file);
+}
+
+// UI Event Handling & Tab switching
+function setupEventListeners() {
+  // Mock Exam Selector
+  document.getElementById("mock-selector").addEventListener("change", onMockChanged);
+  
+  // Theme Toggle Button
+  document.getElementById("btn-theme-toggle").addEventListener("click", toggleTheme);
+  
+
+  
+  // Modal Close buttons
+  const closes = document.querySelectorAll(".modal-close, .btn-close-modal");
+  closes.forEach(c => {
+    c.addEventListener("click", closeModals);
+  });
+  
+  // Leaderboard type Toggle (Raw vs Weighted)
+  const toggles = document.querySelectorAll(".view-toggle .toggle-opt");
+  toggles.forEach(tog => {
+    tog.addEventListener("click", (e) => {
+      toggles.forEach(t => t.classList.remove("active"));
+      e.target.classList.add("active");
+      rankingType = e.target.getAttribute("data-type");
+      calculateAndRenderLeaderboard();
+      renderIndividualReport();
+      renderCharts();
+    });
+  });
+  
+  // Individual Selector
+  document.getElementById("candidate-selector").addEventListener("change", (e) => {
+    selectedCandidateName = e.target.value;
+    calculateAndRenderLeaderboard(); // refresh selection color
+    renderIndividualReport();
+    renderRadarChart();
+  });
+  
+  // Score Input: Prefill scores when candidate name is typed/selected in form
+  document.getElementById("score-candidate-input").addEventListener("input", fillCandidateScoresToForm);
+  document.getElementById("score-mock-select").addEventListener("change", generateScoreInputFields);
+  
+  // Tab Switch Buttons
+  const tabButtons = document.querySelectorAll(".tabs-navigation .tab-btn");
+  tabButtons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      const targetTab = btn.getAttribute("data-tab");
+      switchTab(targetTab);
+    });
+  });
+  
+  // Add part row to manage panel mock creation
+  document.getElementById("btn-add-part").addEventListener("click", () => addPartRow());
+  
+  // Pre-add one part row initially
+  addPartRow();
+}
+
+function switchTab(tabId) {
+  const tabButtons = document.querySelectorAll(".tabs-navigation .tab-btn");
+  const contents = document.querySelectorAll(".tab-content");
+  
+  tabButtons.forEach(btn => {
+    if (btn.getAttribute("data-tab") === tabId) {
+      btn.classList.add("active");
+    } else {
+      btn.classList.remove("active");
+    }
+  });
+  
+  contents.forEach(c => {
+    if (c.id === tabId) {
+      c.classList.add("active");
+    } else {
+      c.classList.remove("active");
+    }
+  });
+  
+  // Specific tab load adjustments
+  if (tabId === "radar") {
+    // Re-render radar to solve width sizing issues
+    setTimeout(renderRadarChart, 50);
+  }
+  if (tabId === "leaderboard") {
+    setTimeout(renderBarChart, 50);
+  }
+}
+
+function closeModals() {
+  document.querySelectorAll(".modal-overlay").forEach(m => {
+    m.classList.remove("active");
+  });
+}
+
+function addPartRow(name = "", max = "") {
+  const container = document.getElementById("parts-list-container");
+  const div = document.createElement("div");
+  div.className = "dynamic-row";
+  div.innerHTML = `
+    <input type="text" class="form-control part-name-input" value="${name}" placeholder="ชื่อหัวข้อ (เช่น 3D Cube)">
+    <input type="number" class="form-control part-max-input" style="width:100px;" value="${max}" placeholder="คะแนนเต็ม">
+    <button type="button" class="btn btn-icon btn-danger-light" onclick="this.parentElement.remove()" title="ลบหัวข้อ"><i class="fa-solid fa-xmark"></i></button>
+  `;
+  container.appendChild(div);
+  // Auto scroll down list
+  container.scrollTop = container.scrollHeight;
+}

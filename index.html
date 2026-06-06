@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TG Mock Score Hub & Analytics</title>
+  
+  <!-- Modern Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Custom Styling -->
+  <link rel="stylesheet" href="style.css">
+  
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+  <div class="app-container">
+    
+    <!-- Top Header Bar -->
+    <header>
+      <div class="brand-section">
+        <div class="brand-logo">
+          <i class="fa-solid fa-chart-line"></i> TG Mock Score Hub
+        </div>
+        <div class="subtitle">ระบบวิเคราะห์คะแนนสอบ & พัฒนาตนเอง</div>
+      </div>
+      
+      <div class="controls-section">
+        <!-- Live Sync Status -->
+        <div id="sync-status-badge" class="sync-badge offline">
+          <i class="fa-solid fa-cloud"></i> <span>โหมดออฟไลน์</span>
+        </div>
+        
+        <!-- Active Mock Selection -->
+        <div class="select-wrapper">
+          <select id="mock-selector" class="select-control" aria-label="เลือกการสอบ Mock">
+            <!-- Populated dynamically -->
+          </select>
+        </div>
+        
+        <!-- Action Buttons -->
+        <button class="btn btn-icon" id="btn-refresh" onclick="loadData()" title="ดึงข้อมูลใหม่">
+          <i class="fa-solid fa-arrows-rotate"></i>
+        </button>
+        <button class="btn btn-icon" id="btn-theme-toggle" title="สลับโหมดสว่าง/มืด">
+          <i id="theme-icon" class="fa-solid fa-sun"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- Metrics Cards Grid -->
+    <div class="grid-summary">
+      <div class="glass-card">
+        <div class="card-title-small">ผู้เข้าสอบทั้งหมด</div>
+        <div class="card-value" id="widget-candidates">0</div>
+        <div class="subtitle"><i class="fa-solid fa-users" style="color:var(--color-primary);"></i> รายชื่อกรอกคะแนนแล้ว</div>
+      </div>
+      <div class="glass-card">
+        <div class="card-title-small">ค่าเฉลี่ยห้องสอบ</div>
+        <div class="card-value" id="widget-avg-score">0.0 <span class="card-value-unit">%</span></div>
+        <div class="subtitle"><i class="fa-solid fa-calculator" style="color:var(--color-secondary);"></i> คะแนนรวมเฉลี่ยร้อยละ</div>
+      </div>
+      <div class="glass-card">
+        <div class="card-title-small">หัวข้อที่เก่งที่สุด</div>
+        <div class="card-value" id="widget-strongest" style="font-size: 1.1rem; min-height: 43px; display: flex; align-items: center; color: var(--color-success); font-weight: 600;">-</div>
+        <div class="subtitle"><i class="fa-solid fa-circle-arrow-up" style="color:var(--color-success);"></i> ส่วนย่อยที่ทำคะแนนเฉลี่ยได้สูงสุด</div>
+      </div>
+      <div class="glass-card">
+        <div class="card-title-small">หัวข้อที่ควรพัฒนาเร่งด่วน</div>
+        <div class="card-value" id="widget-weakest" style="font-size: 1.1rem; min-height: 43px; display: flex; align-items: center; color: var(--color-danger); font-weight: 600;">-</div>
+        <div class="subtitle"><i class="fa-solid fa-circle-arrow-down" style="color:var(--color-danger);"></i> ส่วนย่อยที่ทำคะแนนเฉลี่ยได้ต่ำสุด</div>
+      </div>
+    </div>
+
+    <!-- Main Navigation Tabs -->
+    <nav class="tabs-navigation" aria-label="เมนูหลัก">
+      <button class="tab-btn active" data-tab="leaderboard"><i class="fa-solid fa-trophy"></i> สรุปผลคะแนน & การจัดอันดับ</button>
+      <button class="tab-btn" data-tab="radar"><i class="fa-solid fa-circle-nodes"></i> เปรียบเทียบภาพรวม (Radar & Grid)</button>
+      <button class="tab-btn" data-tab="individual"><i class="fa-solid fa-user-gear"></i> วิเคราะห์จุดแข็งจุดอ่อนรายคน</button>
+      <button class="tab-btn" data-tab="manage"><i class="fa-solid fa-file-pen"></i> จัดการ Mock & กรอกคะแนน</button>
+    </nav>
+
+    <!-- TAB 1: LEADERBOARD & COMPARISONS -->
+    <div id="leaderboard" class="tab-content active">
+      <div class="leaderboard-section">
+        
+        <!-- Table Column -->
+        <div class="glass-card">
+          <div class="table-header-bar">
+            <h3 style="display:flex; align-items:center; gap:0.5rem;"><i class="fa-solid fa-ranking-star" style="color:var(--color-warning);"></i> ลำดับคะแนนสอบ</h3>
+            
+            <!-- Toggle Raw vs Weighted -->
+            <div class="view-toggle">
+              <button class="toggle-opt active" data-type="raw">คะแนนดิบ</button>
+              <button class="toggle-opt" data-type="weighted">ถ่วงน้ำหนัก (เต็ม 10 เท่ากัน)</button>
+            </div>
+          </div>
+          
+          <div class="table-responsive">
+            <table class="score-table">
+              <thead>
+                <tr>
+                  <th class="rank-cell">ลำดับ</th>
+                  <th>ผู้เข้าสอบ</th>
+                  <th>คะแนนที่ได้ / คะแนนเต็ม</th>
+                  <th>คิดเป็นร้อยละ</th>
+                  <th class="progress-bar-cell">ความคืบหน้า</th>
+                </tr>
+              </thead>
+              <tbody id="leaderboard-tbody">
+                <!-- Loaded dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+        
+        <!-- Bar Chart Column -->
+        <div class="glass-card">
+          <h3 style="margin-bottom:1rem; display:flex; align-items:center; gap:0.5rem;"><i class="fa-solid fa-chart-simple" style="color:var(--color-primary);"></i> เปรียบเทียบคะแนนร้อยละ</h3>
+          <div class="chart-container">
+            <canvas id="barChart"></canvas>
+          </div>
+        </div>
+        
+      </div>
+    </div>
+
+    <!-- TAB 2: RADAR COMPARISONS & HEATMAP -->
+    <div id="radar" class="tab-content">
+      <div class="radar-layout">
+        
+        <!-- Radar Canvas Card -->
+        <div class="glass-card">
+          <h3 style="margin-bottom:0.2rem;"><i class="fa-solid fa-circle-nodes" style="color:var(--color-secondary);"></i> แผนภูมิเรดาร์เปรียบเทียบจุดแข็งจุดอ่อน</h3>
+          <p class="subtitle" style="margin-bottom:1.5rem;">ระบบถ่วงคะแนนเต็ม 10 คะแนนเท่ากันทุกพาร์ท เพื่อการมองสัดส่วนทักษะที่ชัดเจน</p>
+          <div class="chart-container" style="min-height: 400px;">
+            <canvas id="radarChart"></canvas>
+          </div>
+        </div>
+        
+        <!-- Selection List Card -->
+        <div class="glass-card">
+          <h3 style="margin-bottom:1rem; display:flex; align-items:center; gap:0.5rem;"><i class="fa-solid fa-square-check" style="color:var(--color-success);"></i> เลือกรายชื่อเปรียบเทียบ</h3>
+          <div id="radar-candidates-list" class="radar-selector">
+            <!-- Checkboxes loaded dynamically -->
+          </div>
+        </div>
+        
+      </div>
+      
+      <!-- Bottom Full Width Heatmap -->
+      <div class="glass-card" style="margin-top: 1.5rem;">
+        <h3 style="margin-bottom:0.2rem; display:flex; align-items:center; gap:0.5rem;"><i class="fa-solid fa-border-all" style="color:var(--color-accent);"></i> ตารางสมรรถนะผู้เข้าสอบทุกคน (Performance Grid Heatmap)</h3>
+        <p class="subtitle" style="margin-bottom:1.5rem;">สีเขียว: เก่ง (>=80%) | สีส้ม: ปานกลาง (50%-79%) | สีแดง: ควรปรับปรุง (<50%)</p>
+        
+        <div class="table-responsive">
+          <table class="score-table" id="heatmap-table">
+            <!-- Loaded dynamically -->
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: INDIVIDUAL REPORT & RECOMMS -->
+    <div id="individual" class="tab-content">
+      
+      <!-- Selector Header -->
+      <div class="glass-card" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem;">
+        <div style="display:flex; align-items:center; gap:1rem; flex-wrap:wrap;">
+          <h3 style="display:flex; align-items:center; gap:0.5rem;"><i class="fa-solid fa-id-card-clip" style="color:var(--color-primary);"></i> รายงานส่วนบุคคล:</h3>
+          <div class="select-wrapper">
+            <select id="candidate-selector" class="select-control" aria-label="เลือกรายชื่อผู้เข้าสอบ">
+              <!-- Loaded dynamically -->
+            </select>
+          </div>
+        </div>
+        
+        <button class="btn btn-primary" onclick="printReport()"><i class="fa-solid fa-print"></i> พิมพ์ / บันทึกเป็น PDF</button>
+      </div>
+
+      <!-- Main Analytics Layout -->
+      <div id="no-individual-panel" class="glass-card" style="text-align:center; padding: 4rem 2rem;">
+        <i class="fa-regular fa-folder-open" style="font-size: 3.5rem; color: var(--text-muted); margin-bottom: 1.5rem;"></i>
+        <h3>ไม่พบผลคะแนนสอบ</h3>
+        <p class="subtitle" style="margin-top: 0.5rem;">กรุณาเลือกหรือกรอกข้อมูลคะแนนก่อนวิเคราะห์ผล</p>
+      </div>
+
+      <div class="candidate-insights-grid" id="individual-analytics-panel" style="display:none;">
+        
+        <!-- Left Column: User Card & Target Tracker -->
+        <div style="display:flex; flex-direction:column; gap:1.5rem;">
+          
+          <!-- Student Card -->
+          <div class="glass-card" style="background: linear-gradient(135deg, rgba(20, 27, 45, 0.9), rgba(13, 18, 30, 0.9));">
+            <div class="avatar-header">
+              <div class="avatar-icon" id="ind-avatar">U</div>
+              <div>
+                <h2 id="ind-name" style="font-size:1.6rem; font-weight:700;">-</h2>
+                <div class="subtitle"><i class="fa-solid fa-circle-check" style="color:var(--color-success)"></i> สอบเสร็จสิ้น: <span id="ind-mock-title">-</span></div>
+              </div>
+            </div>
+            
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top:1.5rem;">
+              <div>
+                <div class="card-title-small">ลำดับของฉัน</div>
+                <div class="card-value" id="ind-rank" style="font-size: 1.5rem;">-</div>
+              </div>
+              <div>
+                <div class="card-title-small">คะแนนดิบรวม</div>
+                <div class="card-value" id="ind-raw" style="font-size: 1.5rem;">-</div>
+              </div>
+              <div>
+                <div class="card-title-small">ถ่วงน้ำหนักรวม</div>
+                <div class="card-value" id="ind-weighted" style="font-size: 1.5rem;">-</div>
+              </div>
+              <div>
+                <div class="card-title-small">เฉลี่ยร้อยละ</div>
+                <div class="card-value" id="ind-avg" style="font-size: 1.5rem;">-</div>
+              </div>
+            </div>
+            
+            <!-- Target Progress Card -->
+            <div class="target-tracker-card">
+              <div class="target-header">
+                <div>
+                  <span style="font-weight: 600; font-size:0.95rem;">เป้าหมายคะแนนดิบสะสม</span>
+                  <span class="sync-badge online" id="target-success-badge" style="display:none; padding: 0.1rem 0.5rem; font-size: 0.7rem;"><i class="fa-solid fa-check"></i> สำเร็จ!</span>
+                </div>
+                <div class="target-input-wrapper">
+                  <input type="number" id="target-score-input" class="target-input" aria-label="เป้าหมายคะแนน">
+                  <button class="btn" onclick="updateTargetScore()" style="padding: 0.3rem 0.6rem; border-radius: 8px; font-size: 0.8rem;"><i class="fa-solid fa-floppy-disk"></i></button>
+                </div>
+              </div>
+              <div class="progress-track" style="margin: 0.5rem 0;">
+                <div class="progress-fill" id="target-progress-fill" style="width: 0%"></div>
+              </div>
+              <div style="display:flex; justify-content:space-between; font-size: 0.8rem; color:var(--text-muted);">
+                <span>ทำได้จริง: <strong id="target-progress-text">-</strong></span>
+                <span>บรรลุเป้าหมาย: <strong id="target-progress-percent">0%</strong></span>
+              </div>
+            </div>
+          </div>
+          
+        </div>
+        
+        <!-- Right Column: Strengths & Weaknesses -->
+        <div style="display:flex; flex-direction:column; gap:1.5rem;">
+          
+          <!-- Strengths (Top 3) -->
+          <div class="glass-card">
+            <h3 style="margin-bottom:1rem; display:flex; align-items:center; gap:0.5rem; color:var(--color-success);"><i class="fa-solid fa-circle-arrow-up"></i> จุดแข็ง 3 อันดับแรก</h3>
+            <div class="insights-list" id="strengths-list">
+              <!-- Loaded dynamically -->
+            </div>
+          </div>
+          
+          <!-- Weaknesses (Bottom 3) -->
+          <div class="glass-card">
+            <h3 style="margin-bottom:1rem; display:flex; align-items:center; gap:0.5rem; color:var(--color-danger);"><i class="fa-solid fa-circle-arrow-down"></i> จุดอ่อน 3 อันดับ</h3>
+            <div class="insights-list" id="weaknesses-list">
+              <!-- Loaded dynamically -->
+            </div>
+          </div>
+          
+        </div>
+        
+      </div>
+    </div>
+
+    <!-- TAB 4: MANAGE & INPUT -->
+    <div id="manage" class="tab-content">
+      <div class="manage-grid">
+        
+        <!-- Form 1: Create Mock Definition -->
+        <div class="glass-card">
+          <h3 id="mock-form-header" style="margin-bottom:1rem; display:flex; align-items:center; gap:0.5rem;"><i class="fa-solid fa-folder-plus" style="color:var(--color-primary);"></i> 1. จัดการข้อมูลชุดข้อสอบ Mock</h3>
+          <form id="create-mock-form" onsubmit="submitNewMock(event)">
+            
+            <!-- Mode Toggle: Create vs Edit -->
+            <div class="form-group" style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1.2rem;">
+              <span style="font-size:0.9rem; font-weight:600; color:var(--text-muted);">โหมดการทำงาน</span>
+              <div class="view-toggle" style="padding: 0.15rem; margin-bottom: 0;">
+                <button type="button" class="toggle-opt active" id="mode-create-btn" onclick="setMockFormMode('create')">สร้างใหม่</button>
+                <button type="button" class="toggle-opt" id="mode-edit-btn" onclick="setMockFormMode('edit')">แก้ไขที่มีอยู่</button>
+              </div>
+            </div>
+
+            <!-- Existing Mock Selector (Shown in edit mode) -->
+            <div class="form-group" id="edit-mock-select-group" style="display:none;">
+              <label for="edit-mock-selector">เลือก Mock ที่ต้องการแก้ไข</label>
+              <div class="select-wrapper">
+                <select id="edit-mock-selector" class="select-control" style="width:100%;" onchange="loadMockToEdit()">
+                  <!-- Loaded dynamically -->
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="new-mock-name" id="mock-name-label">ชื่อชุดข้อสอบ Mock</label>
+              <input type="text" id="new-mock-name" class="form-control" placeholder="เช่น Mock TG5, TCAS 69" required>
+            </div>
+            
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+              <span style="font-size:0.9rem; font-weight:600; color:var(--text-muted);">หัวข้อพาร์ท & คะแนนเต็ม</span>
+              <button type="button" class="btn" id="btn-add-part" style="padding:0.4rem 0.8rem; font-size:0.85rem;"><i class="fa-solid fa-plus"></i> เพิ่มหัวข้อย่อย</button>
+            </div>
+            
+            <!-- Dynamic part rows container -->
+            <div id="parts-list-container" class="dynamic-list">
+              <!-- Dynamically added rows -->
+            </div>
+            
+            <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; margin-top:1rem;"><i class="fa-solid fa-floppy-disk"></i> บันทึกข้อมูลข้อสอบ</button>
+          </form>
+        </div>
+        
+        <!-- Form 2: Enter/Edit Scores -->
+        <div class="glass-card">
+          <h3 style="margin-bottom:1rem; display:flex; align-items:center; gap:0.5rem;"><i class="fa-solid fa-user-pen" style="color:var(--color-success);"></i> 2. กรอก / แก้ไขคะแนนสอบรายบุคคล</h3>
+          <form id="save-score-form" onsubmit="submitScore(event)">
+            
+            <div class="form-group">
+              <label for="score-mock-select">เลือกชุดข้อสอบ</label>
+              <div class="select-wrapper">
+                <select id="score-mock-select" class="select-control" style="width:100%;">
+                  <!-- Loaded dynamically -->
+                </select>
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label for="score-candidate-input">ชื่อผู้เข้าสอบ</label>
+              <input type="text" id="score-candidate-input" class="form-control" placeholder="พิมพ์ชื่อผู้เข้าสอบ (หากชื่อซ้ำระบบจะแก้ไขคะแนนเดิม)" required>
+              <small style="color:var(--text-muted); font-size:0.8rem; margin-top:0.2rem; display:block;">หากมีคะแนนเก่าในระบบ ระบบจะดึงคะแนนเดิมขึ้นมาแก้ไขอัตโนมัติ</small>
+            </div>
+            
+            <h4 style="margin: 1.5rem 0 0.8rem 0; font-size:0.95rem; text-transform:uppercase; color:var(--text-muted); border-bottom: 1px solid var(--border-light); padding-bottom:0.3rem;">คะแนนแต่ละหัวข้อย่อย</h4>
+            
+            <!-- Dynamic inputs for scores based on selected mock definition -->
+            <div id="dynamic-score-inputs" style="max-height: 280px; overflow-y:auto; padding-right: 0.5rem;">
+              <!-- Loaded dynamically -->
+            </div>
+            
+            <div style="display:flex; gap:0.8rem; margin-top:1.5rem;">
+              <button type="button" id="btn-delete-score" class="btn btn-danger-light" style="flex:1; display:none; justify-content:center; background-color: var(--color-danger); color: #fff; border: none;" onclick="deleteScoreFromForm()"><i class="fa-solid fa-trash-can"></i> ลบคะแนน</button>
+              <button type="submit" class="btn btn-success" style="flex:2; justify-content:center;"><i class="fa-solid fa-paper-plane"></i> บันทึกคะแนนผู้สอบ</button>
+            </div>
+          </form>
+        </div>
+        
+      </div>
+      
+      <!-- Database Management & Settings Sync instructions -->
+      <div class="glass-card" style="margin-top:2rem;">
+        <h3 style="margin-bottom:1rem; display:flex; align-items:center; gap:0.5rem;"><i class="fa-solid fa-database" style="color:var(--color-warning);"></i> 3. จัดการฐานข้อมูลและกู้คืนข้อมูล</h3>
+        
+        <div class="settings-section">
+          <div style="display:flex; gap:1rem; flex-wrap:wrap;">
+            <button class="btn" onclick="exportDataJson()"><i class="fa-solid fa-file-export"></i> ดาวน์โหลดสำรองข้อมูล (data.json)</button>
+            <label class="btn" style="display:inline-flex; align-items:center; cursor:pointer;">
+              <i class="fa-solid fa-file-import"></i> นำเข้าข้อมูลสำรอง (JSON)
+              <input type="file" id="import-file-input" style="display:none;" onchange="importDataJson(event)" accept=".json">
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+
+
+  <!-- MODAL: DELETE CONFIRMATION -->
+  <div class="modal-overlay" id="delete-modal">
+    <div class="modal-content" style="max-width: 400px; text-align:center;">
+      <div class="modal-header" style="justify-content:center; margin-bottom: 1rem;">
+        <i class="fa-solid fa-triangle-exclamation" style="font-size:3rem; color:var(--color-danger);"></i>
+      </div>
+      <h3 style="margin-bottom:0.5rem;">ลบข้อมูลคะแนนสอบ?</h3>
+      <p class="subtitle" style="margin-bottom:1.5rem;">คุณแน่ใจหรือไม่ที่จะลบคะแนนสอบของ <strong id="delete-candidate-name-span" style="color:var(--text-main);"></strong> การกระทำนี้ไม่สามารถย้อนคืนได้</p>
+      
+      <div style="display:flex; justify-content:center; gap:0.8rem;">
+        <button class="btn btn-close-modal" style="flex:1;">ยกเลิก</button>
+        <button class="btn btn-danger-light" onclick="executeDeleteScore()" style="flex:1; background-color: var(--color-danger); color: #fff;"><i class="fa-solid fa-trash-can"></i> ลบข้อมูล</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating Toasts -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Application Logic -->
+  <script src="app.js"></script>
+</body>
+</html>
