@@ -1,8 +1,8 @@
 // TG Mock Score Dashboard - Core Logic
 
 // Configuration
-let DEFAULT_API_URL = "https://script.google.com/macros/s/AKfycbyT0XEcdi8pyRYu2GpYnXB-Q33LQfsdLRwghmvX7ZlXhgz2iNqbXuSOD1Gfit0uRCOV/exec"; // Change this to your Apps Script Web App URL if you want it hardcoded
-let apiUrl = localStorage.getItem("tg_mock_api_url") || DEFAULT_API_URL;
+let DEFAULT_API_URL = "https://script.google.com/macros/s/AKfycbz_VPGyctXtGeSzagled0XgVD2nGmZzLxVf6d-qYMyDueU3fAiQP8EkmWwbeLjuZNKb/exec";
+let apiUrl = DEFAULT_API_URL;
 
 // State Database
 let db = {
@@ -191,9 +191,11 @@ function toggleTheme() {
     localStorage.setItem("tg_mock_theme", "light");
     showToast("เปลี่ยนเป็นโหมดสว่างเรียบร้อย", "success");
   }
-  // Re-render charts to adjust gridline colors if needed
+  // Re-render charts, heatmap, and individual reports to adjust theme colors dynamically
   if (selectedMockName) {
     renderCharts();
+    renderHeatmap();
+    renderIndividualReport();
   }
 }
 
@@ -220,6 +222,30 @@ function showToast(message, type = "info") {
       toast.remove();
     });
   }, 3000);
+}
+
+// Helper to set button loading states
+function setButtonLoading(buttonId, isLoading, loadingText = "กำลังโหลด...") {
+  const btn = document.getElementById(buttonId);
+  if (!btn) return;
+  
+  if (isLoading) {
+    if (!btn.hasAttribute("data-original-html")) {
+      btn.setAttribute("data-original-html", btn.innerHTML);
+    }
+    btn.disabled = true;
+    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ${loadingText}`;
+    btn.style.opacity = "0.7";
+    btn.style.cursor = "not-allowed";
+  } else {
+    const originalHtml = btn.getAttribute("data-original-html");
+    if (originalHtml) {
+      btn.innerHTML = originalHtml;
+    }
+    btn.disabled = false;
+    btn.style.opacity = "";
+    btn.style.cursor = "";
+  }
 }
 
 // Data Fetching & Sync
@@ -804,7 +830,30 @@ function varStyle(varName) {
   return getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
 }
 
-// Heatmap Breakdown Rendering
+// Heatmap Breakdown Rendering & Color Interpolator
+function getHeatmapColor(pct) {
+  const isLight = document.body.classList.contains("light-theme");
+  
+  // Interpolate Hue (H) in HSL: 0% is Red (0), 50% is Orange (38), 100% is Green (145)
+  let h;
+  if (pct < 50) {
+    h = (pct / 50) * 38;
+  } else {
+    h = 38 + ((pct - 50) / 50) * (145 - 38);
+  }
+  
+  let bg, text;
+  if (isLight) {
+    bg = `hsla(${h}, 85%, 45%, 0.15)`;
+    text = `hsl(${h}, 90%, 28%)`;
+  } else {
+    bg = `hsla(${h}, 80%, 40%, 0.18)`;
+    text = `hsl(${h}, 90%, 75%)`;
+  }
+  
+  return { bg, text };
+}
+
 function renderHeatmap() {
   const currentMock = db.mocks.find(m => m.name === selectedMockName);
   if (!currentMock) return;
@@ -846,11 +895,9 @@ function renderHeatmap() {
       const scoreVal = s.scores[part.name] || 0;
       const pct = part.max > 0 ? (scoreVal / part.max) * 100 : 0;
       
-      let levelClass = "hm-level-1";
-      if (pct >= 80) levelClass = "hm-level-3";
-      else if (pct >= 50) levelClass = "hm-level-2";
+      const colors = getHeatmapColor(pct);
       
-      tr.innerHTML += `<td class="heatmap-cell ${levelClass}" title="${pct.toFixed(1)}%">${scoreVal}</td>`;
+      tr.innerHTML += `<td class="heatmap-cell" style="background-color: ${colors.bg} !important; color: ${colors.text} !important;" title="${pct.toFixed(1)}%">${scoreVal}</td>`;
     });
     tbody.appendChild(tr);
   });
@@ -910,11 +957,35 @@ function renderIndividualReport() {
   document.getElementById("ind-weighted").innerHTML = `${stats.weightedTotal.toFixed(1)} <span class="card-value-unit">/ ${stats.weightedMax}</span>`;
   document.getElementById("ind-avg").innerHTML = `${(rankingType === "raw" ? stats.rawPercentage : stats.weightedPercentage).toFixed(1)}%`;
   
-  // Strengths & Weaknesses (Top 3, Bottom 3)
+  // Strengths & Weaknesses (Top 3, Bottom 3) with Peer Comparison
   const partPerformance = currentMock.parts.map(part => {
     const val = candScore.scores[part.name] || 0;
     const pct = part.max > 0 ? (val / part.max) * 100 : 0;
-    return { name: part.name, score: val, max: part.max, pct };
+    
+    // Find best score and candidate(s) for this part
+    let bestScore = 0;
+    let bestCandidates = "-";
+    if (mockScores.length > 0) {
+      bestScore = Math.max(...mockScores.map(s => s.scores[part.name] || 0));
+      const bestCandsList = mockScores
+        .filter(s => (s.scores[part.name] || 0) === bestScore)
+        .map(s => s.candidateName);
+      bestCandidates = bestCandsList.join(", ");
+    }
+    
+    // Find average score for this part
+    const sum = mockScores.reduce((acc, s) => acc + (s.scores[part.name] || 0), 0);
+    const average = mockScores.length > 0 ? sum / mockScores.length : 0;
+    
+    return { 
+      name: part.name, 
+      score: val, 
+      max: part.max, 
+      pct,
+      bestScore,
+      bestCandidates,
+      average
+    };
   });
   
   // Sort parts by performance percentage
@@ -931,7 +1002,10 @@ function renderIndividualReport() {
       <div class="insight-icon strength-icon"><i class="fa-solid fa-circle-arrow-up"></i></div>
       <div class="insight-details">
         <h4>${st.name} <small style="color:var(--color-success); font-weight:bold;">${st.pct.toFixed(0)}%</small></h4>
-        <p>ทำได้ ${st.score} จากคะแนนเต็ม ${st.max} คะแนน</p>
+        <p>ทำได้ ${st.score} / ${st.max} คะแนน</p>
+        <p class="comparison-text" style="font-size:0.8rem; color:var(--text-muted); margin-top:0.2rem;">
+          <i class="fa-solid fa-scale-balanced"></i> ค่าเฉลี่ย: <strong>${st.average.toFixed(1)}</strong> | สูงสุด: <strong>${st.bestScore}</strong> (${st.bestCandidates})
+        </p>
       </div>
     `;
     strengthsContainer.appendChild(div);
@@ -949,7 +1023,10 @@ function renderIndividualReport() {
       <div class="insight-icon weakness-icon"><i class="fa-solid fa-circle-arrow-down"></i></div>
       <div class="insight-details">
         <h4>${wk.name} <small style="color:var(--color-danger); font-weight:bold;">${wk.pct.toFixed(0)}%</small></h4>
-        <p>ทำได้ ${wk.score} จากคะแนนเต็ม ${wk.max} คะแนน</p>
+        <p>ทำได้ ${wk.score} / ${wk.max} คะแนน</p>
+        <p class="comparison-text" style="font-size:0.8rem; color:var(--text-muted); margin-top:0.2rem;">
+          <i class="fa-solid fa-scale-balanced"></i> ค่าเฉลี่ย: <strong>${wk.average.toFixed(1)}</strong> | สูงสุด: <strong>${wk.bestScore}</strong> (${wk.bestCandidates})
+        </p>
       </div>
     `;
     weaknessesContainer.appendChild(div);
@@ -1083,6 +1160,8 @@ async function submitNewMock(event) {
     return;
   }
   
+  setButtonLoading("btn-submit-mock", true, "กำลังบันทึก...");
+  setButtonLoading("btn-delete-mock", true, "กำลังบันทึก...");
   setSyncStatus("loading", "กำลังบันทึก Mock...");
   
   if (mockFormMode === "edit") {
@@ -1114,8 +1193,11 @@ async function submitNewMock(event) {
         showToast(`อัปเดตแก้ไข Mock ${mockName} สำเร็จ`, "success");
       } catch (err) {
         console.error(err);
-        showToast("บันทึกออนไลน์ไม่สำเร็จ บันทึกในบราวเซอร์ชั่วคราว", "warning");
-        editMockLocally(editingOriginalMockName, mockName, parts, partRenames);
+        showToast("บันทึกออนไลน์ไม่สำเร็จ! กรุณาตรวจสอบว่าได้อัปเดตสคริปต์ Google Apps Script เป็นเวอร์ชันล่าสุดใน Google Sheet แล้ว", "error");
+        setSyncStatus("error", "บันทึกออนไลน์ไม่สำเร็จ");
+        setButtonLoading("btn-submit-mock", false);
+        setButtonLoading("btn-delete-mock", false);
+        return; // Stop execution to prevent overwriting local storage with old data
       }
     } else {
       editMockLocally(editingOriginalMockName, mockName, parts, partRenames);
@@ -1141,8 +1223,11 @@ async function submitNewMock(event) {
         showToast(`สร้าง Mock ${mockName} เรียบร้อย`, "success");
       } catch (err) {
         console.error(err);
-        showToast("บันทึกออนไลน์ไม่สำเร็จ บันทึกในบราวเซอร์ชั่วคราว", "warning");
-        saveMockLocally(mockName, parts);
+        showToast("สร้าง Mock ออนไลน์ไม่สำเร็จ! กรุณาตรวจสอบว่าได้อัปเดตสคริปต์ Google Apps Script เป็นเวอร์ชันล่าสุดใน Google Sheet แล้ว", "error");
+        setSyncStatus("error", "สร้าง Mock ออนไลน์ไม่สำเร็จ");
+        setButtonLoading("btn-submit-mock", false);
+        setButtonLoading("btn-delete-mock", false);
+        return; // Stop execution to prevent overwriting local storage with old data
       }
     } else {
       saveMockLocally(mockName, parts);
@@ -1155,6 +1240,9 @@ async function submitNewMock(event) {
   
   // Reload Data
   await loadData();
+  
+  setButtonLoading("btn-submit-mock", false);
+  setButtonLoading("btn-delete-mock", false);
 }
 
 // Mode toggler for Mock creation / editing form
@@ -1167,12 +1255,14 @@ function setMockFormMode(mode) {
   const mockHeader = document.getElementById("mock-form-header");
   const nameLabel = document.getElementById("mock-name-label");
   const nameInput = document.getElementById("new-mock-name");
-  const submitBtn = document.querySelector("#create-mock-form button[type='submit']");
+  const submitBtn = document.getElementById("btn-submit-mock") || document.querySelector("#create-mock-form button[type='submit']");
+  const deleteMockBtn = document.getElementById("btn-delete-mock");
   
   if (mode === "create") {
     createBtn.classList.add("active");
     editBtn.classList.remove("active");
     if (editGroup) editGroup.style.display = "none";
+    if (deleteMockBtn) deleteMockBtn.style.display = "none";
     mockHeader.innerHTML = `<i class="fa-solid fa-folder-plus" style="color:var(--color-primary);"></i> 1. สร้างการสอบ Mock ใหม่`;
     nameLabel.textContent = "ชื่อชุดข้อสอบ Mock";
     nameInput.placeholder = "เช่น Mock TG5, TCAS 69";
@@ -1215,6 +1305,17 @@ function loadMockToEdit() {
   mock.parts.forEach(part => {
     addPartRow(part.name, part.max);
   });
+  
+  // Design mock deletion button visibility: show if no scores exist for this mock
+  const hasScores = db.scores.some(s => s.mockName === mockName);
+  const deleteMockBtn = document.getElementById("btn-delete-mock");
+  if (deleteMockBtn) {
+    if (mockFormMode === "edit" && !hasScores) {
+      deleteMockBtn.style.display = "inline-flex";
+    } else {
+      deleteMockBtn.style.display = "none";
+    }
+  }
 }
 
 function editMockLocally(oldName, newName, parts, renames) {
@@ -1305,6 +1406,8 @@ async function submitScore(event) {
   
   if (!valid) return;
   
+  setButtonLoading("btn-submit-score", true, "กำลังบันทึก...");
+  setButtonLoading("btn-delete-score", true, "กำลังรอ...");
   setSyncStatus("loading", "กำลังบันทึกคะแนน...");
   
   const payload = {
@@ -1326,8 +1429,11 @@ async function submitScore(event) {
       showToast(`บันทึกคะแนนของ ${candidateName} สำเร็จ`, "success");
     } catch (err) {
       console.error(err);
-      showToast("บันทึกออนไลน์ไม่สำเร็จ บันทึกในบราวเซอร์ชั่วคราว", "warning");
-      saveScoreLocally(mockName, candidateName, scores);
+      showToast("บันทึกออนไลน์ไม่สำเร็จ! กรุณาตรวจสอบว่าได้อัปเดตสคริปต์ Google Apps Script เป็นเวอร์ชันล่าสุดใน Google Sheet แล้ว", "error");
+      setSyncStatus("error", "บันทึกออนไลน์ไม่สำเร็จ");
+      setButtonLoading("btn-submit-score", false);
+      setButtonLoading("btn-delete-score", false);
+      return; // Stop here so it doesn't overwrite
     }
   } else {
     saveScoreLocally(mockName, candidateName, scores);
@@ -1336,6 +1442,9 @@ async function submitScore(event) {
   
   selectedCandidateName = candidateName; // Focus on this candidate
   await loadData();
+  
+  setButtonLoading("btn-submit-score", false);
+  setButtonLoading("btn-delete-score", false);
 }
 
 function saveScoreLocally(mockName, candidateName, scores) {
@@ -1372,6 +1481,10 @@ async function executeDeleteScore() {
     candidateName: deleteCandidateRef
   };
   
+  setButtonLoading("btn-confirm-delete-score", true, "กำลังลบ...");
+  setButtonLoading("btn-delete-score", true, "กำลังลบ...");
+  setButtonLoading("btn-submit-score", true, "กำลังรอ...");
+  
   if (apiUrl) {
     try {
       const response = await fetch(apiUrl, {
@@ -1384,8 +1497,12 @@ async function executeDeleteScore() {
       showToast("ลบคะแนนสำเร็จ", "success");
     } catch (err) {
       console.error(err);
-      showToast("ลบข้อมูลจากคลาวด์ไม่สำเร็จ ลบในเครื่องแทน", "warning");
-      deleteScoreLocally(deleteMockRef, deleteCandidateRef);
+      showToast("ลบคะแนนออนไลน์ไม่สำเร็จ! กรุณาตรวจสอบว่าได้อัปเดตสคริปต์ Google Apps Script เป็นเวอร์ชันล่าสุดใน Google Sheet แล้ว", "error");
+      setSyncStatus("error", "ลบคะแนนออนไลน์ไม่สำเร็จ");
+      setButtonLoading("btn-confirm-delete-score", false);
+      setButtonLoading("btn-delete-score", false);
+      setButtonLoading("btn-submit-score", false);
+      return; // Stop here so it doesn't overwrite
     }
   } else {
     deleteScoreLocally(deleteMockRef, deleteCandidateRef);
@@ -1408,10 +1525,81 @@ async function executeDeleteScore() {
   deleteMockRef = "";
   closeModals();
   await loadData();
+  
+  setButtonLoading("btn-confirm-delete-score", false);
+  setButtonLoading("btn-delete-score", false);
+  setButtonLoading("btn-submit-score", false);
 }
 
 function deleteScoreLocally(mockName, candidateName) {
   db.scores = db.scores.filter(s => !(s.mockName === mockName && s.candidateName === candidateName));
+  localStorage.setItem("tg_mock_db_cache", JSON.stringify(db));
+}
+
+function deleteMockFromForm() {
+  const selector = document.getElementById("edit-mock-selector");
+  if (!selector) return;
+  const mockName = selector.value;
+  if (!mockName) return;
+  
+  const hasScores = db.scores.some(s => s.mockName === mockName);
+  if (hasScores) {
+    showToast("ไม่สามารถลบ Mock นี้ได้ เนื่องจากมีผู้กรอกคะแนนแล้ว", "error");
+    return;
+  }
+  
+  if (confirm(`คุณแน่ใจหรือไม่ที่จะลบชุดข้อสอบ ${mockName}?`)) {
+    executeDeleteMock(mockName);
+  }
+}
+
+async function executeDeleteMock(mockName) {
+  setSyncStatus("loading", "กำลังลบ Mock...");
+  const payload = {
+    action: "deleteMock",
+    mockName: mockName
+  };
+  
+  setButtonLoading("btn-delete-mock", true, "กำลังลบ...");
+  setButtonLoading("btn-submit-mock", true, "กำลังรอ...");
+  
+  if (apiUrl) {
+    try {
+      const response = await fetch(apiUrl, {
+        method: "POST",
+        body: JSON.stringify(payload),
+        headers: { "Content-Type": "text/plain" }
+      });
+      const res = await response.json();
+      if (!res.success) throw new Error(res.error);
+      showToast(`ลบชุดข้อสอบ ${mockName} สำเร็จ`, "success");
+    } catch (err) {
+      console.error(err);
+      showToast("ลบชุดข้อสอบออนไลน์ไม่สำเร็จ! กรุณาตรวจสอบว่าได้อัปเดตสคริปต์ Google Apps Script เป็นเวอร์ชันล่าสุดใน Google Sheet แล้ว", "error");
+      setSyncStatus("error", "ลบข้อสอบออนไลน์ไม่สำเร็จ");
+      setButtonLoading("btn-delete-mock", false);
+      setButtonLoading("btn-submit-mock", false);
+      return;
+    }
+  } else {
+    deleteMockLocally(mockName);
+    showToast(`ลบชุดข้อสอบ ${mockName} ในเครื่องสำเร็จ (โหมดออฟไลน์)`, "success");
+  }
+  
+  if (selectedMockName === mockName) {
+    selectedMockName = "";
+  }
+  
+  setMockFormMode("create");
+  await loadData();
+  
+  setButtonLoading("btn-delete-mock", false);
+  setButtonLoading("btn-submit-mock", false);
+}
+
+function deleteMockLocally(mockName) {
+  db.mocks = db.mocks.filter(m => m.name !== mockName);
+  db.scores = db.scores.filter(s => s.mockName !== mockName);
   localStorage.setItem("tg_mock_db_cache", JSON.stringify(db));
 }
 
