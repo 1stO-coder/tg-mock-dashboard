@@ -1,8 +1,23 @@
 // TG Mock Score Dashboard - Core Logic
 
 // Configuration
-let DEFAULT_API_URL = "https://script.google.com/macros/s/AKfycbz_VPGyctXtGeSzagled0XgVD2nGmZzLxVf6d-qYMyDueU3fAiQP8EkmWwbeLjuZNKb/exec";
+let DEFAULT_API_URL = "https://script.google.com/macros/s/AKfycbwWiC1Vagu2V_jMevuA0CZq0PyMIJGRy5EdeypQC3DhaT_O4NJL05g4gfZNGnxSRkdn/exec";
 let apiUrl = DEFAULT_API_URL;
+
+// Helper to determine if a mock supports Accuracy input and calculation
+function isAccuracyEnabled(mockName) {
+  if (!mockName) return false;
+  const nameLower = mockName.toLowerCase().replace(/\s+/g, "");
+  // Mocks 1 - 5.2 as listed by user (Mock TG1 to TG5) do not have accuracy data
+  const disabledMocks = [
+    "mocktg1", "mocktg2", "mocktg3", "mocktg4", "mocktg5",
+    "mock1", "mock2", "mock3", "mock4", "mock5", "mock5.1", "mock5.2"
+  ];
+  if (disabledMocks.includes(nameLower)) {
+    return false;
+  }
+  return true;
+}
 
 // State Database
 let db = {
@@ -441,12 +456,56 @@ function calculateAndRenderLeaderboard() {
   if (!currentMock) return;
   
   const mockScores = db.scores.filter(s => s.mockName === selectedMockName);
+  const accEnabled = isAccuracyEnabled(selectedMockName);
+  
+  // Dynamic header rendering
+  const thead = document.getElementById("leaderboard-thead");
+  if (thead) {
+    if (accEnabled) {
+      thead.innerHTML = `
+        <tr>
+          <th class="rank-cell">ลำดับ</th>
+          <th>ผู้เข้าสอบ</th>
+          <th>คะแนนที่ได้ / คะแนนเต็ม</th>
+          <th>คิดเป็นร้อยละ</th>
+          <th>% Accuracy</th>
+          <th class="progress-bar-cell">ความคืบหน้า</th>
+        </tr>
+      `;
+    } else {
+      thead.innerHTML = `
+        <tr>
+          <th class="rank-cell">ลำดับ</th>
+          <th>ผู้เข้าสอบ</th>
+          <th>คะแนนที่ได้ / คะแนนเต็ม</th>
+          <th>คิดเป็นร้อยละ</th>
+          <th class="progress-bar-cell">ความคืบหน้า</th>
+        </tr>
+      `;
+    }
+  }
   
   const processedScores = mockScores.map(candScore => {
     const stats = getMockDataForCandidate(currentMock, candScore);
+    
+    // Calculate overall accuracy
+    let totalCorrect = 0;
+    let totalAttempted = 0;
+    currentMock.parts.forEach(part => {
+      const correct = candScore.scores[part.name] || 0;
+      const attempted = candScore.scores[part.name + "_attempted"];
+      if (attempted !== undefined && attempted !== null) {
+        totalCorrect += correct;
+        totalAttempted += attempted;
+      }
+    });
+    const accuracy = totalAttempted > 0 ? (totalCorrect / totalAttempted) * 100 : 0;
+    
     return {
       candidateName: candScore.candidateName,
-      ...stats
+      ...stats,
+      accuracy,
+      hasAccuracyData: totalAttempted > 0
     };
   });
   
@@ -465,7 +524,8 @@ function calculateAndRenderLeaderboard() {
   tbody.innerHTML = "";
   
   if (processedScores.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 2rem; color: var(--text-muted);">ยังไม่มีผู้กรอกคะแนนสำหรับการสอบนี้</td></tr>`;
+    const colspanVal = accEnabled ? 6 : 5;
+    tbody.innerHTML = `<tr><td colspan="${colspanVal}" style="text-align:center; padding: 2rem; color: var(--text-muted);">ยังไม่มีผู้กรอกคะแนนสำหรับการสอบนี้</td></tr>`;
     return;
   }
   
@@ -489,6 +549,7 @@ function calculateAndRenderLeaderboard() {
       <td class="name-cell" onclick="selectCandidate('${row.candidateName}')">${row.candidateName}</td>
       <td class="score-cell">${totalScoreStr}</td>
       <td class="score-cell">${percentage.toFixed(1)}%</td>
+      ${accEnabled ? `<td class="score-cell" style="color: var(--color-primary); font-weight: 600;">${row.hasAccuracyData ? row.accuracy.toFixed(1) + '%' : '-'}</td>` : ""}
       <td class="progress-bar-cell">
         <div class="progress-track">
           <div class="progress-fill" style="width: ${percentage}%"></div>
@@ -956,6 +1017,8 @@ function renderIndividualReport() {
   document.getElementById("ind-avg").innerHTML = `${(rankingType === "raw" ? stats.rawPercentage : stats.weightedPercentage).toFixed(1)}%`;
   
   // Strengths & Weaknesses (Top 3, Bottom 3) with Peer Comparison
+  const accEnabled = isAccuracyEnabled(selectedMockName);
+  
   const partPerformance = currentMock.parts.map(part => {
     const val = candScore.scores[part.name] || 0;
     const pct = part.max > 0 ? (val / part.max) * 100 : 0;
@@ -975,6 +1038,11 @@ function renderIndividualReport() {
     const sum = mockScores.reduce((acc, s) => acc + (s.scores[part.name] || 0), 0);
     const average = mockScores.length > 0 ? sum / mockScores.length : 0;
     
+    // Calculate part accuracy
+    const attempted = candScore.scores[part.name + "_attempted"];
+    const hasAccuracy = attempted !== undefined && attempted !== null && attempted > 0;
+    const accuracy = hasAccuracy ? (val / attempted) * 100 : 0;
+    
     return { 
       name: part.name, 
       score: val, 
@@ -982,7 +1050,10 @@ function renderIndividualReport() {
       pct,
       bestScore,
       bestCandidates,
-      average
+      average,
+      attempted,
+      hasAccuracy,
+      accuracy
     };
   });
   
@@ -1000,7 +1071,7 @@ function renderIndividualReport() {
       <div class="insight-icon strength-icon"><i class="fa-solid fa-circle-arrow-up"></i></div>
       <div class="insight-details">
         <h4>${st.name} <small style="color:var(--color-success); font-weight:bold;">${st.pct.toFixed(0)}%</small></h4>
-        <p>ทำได้ ${st.score} / ${st.max} คะแนน</p>
+        <p>ทำได้ ${st.score} / ${st.max} คะแนน${accEnabled && st.hasAccuracy ? ` | ความแม่นยำ: <strong style="color: var(--color-primary);">${st.accuracy.toFixed(1)}%</strong>` : ""}</p>
         <p class="comparison-text" style="font-size:0.8rem; color:var(--text-muted); margin-top:0.2rem;">
           <i class="fa-solid fa-scale-balanced"></i> ค่าเฉลี่ย: <strong>${st.average.toFixed(1)}</strong> | สูงสุด: <strong>${st.bestScore}</strong> (${st.bestCandidates})
         </p>
@@ -1021,7 +1092,7 @@ function renderIndividualReport() {
       <div class="insight-icon weakness-icon"><i class="fa-solid fa-circle-arrow-down"></i></div>
       <div class="insight-details">
         <h4>${wk.name} <small style="color:var(--color-danger); font-weight:bold;">${wk.pct.toFixed(0)}%</small></h4>
-        <p>ทำได้ ${wk.score} / ${wk.max} คะแนน</p>
+        <p>ทำได้ ${wk.score} / ${wk.max} คะแนน${accEnabled && wk.hasAccuracy ? ` | ความแม่นยำ: <strong style="color: var(--color-danger);">${wk.accuracy.toFixed(1)}%</strong>` : ""}</p>
         <p class="comparison-text" style="font-size:0.8rem; color:var(--text-muted); margin-top:0.2rem;">
           <i class="fa-solid fa-scale-balanced"></i> ค่าเฉลี่ย: <strong>${wk.average.toFixed(1)}</strong> | สูงสุด: <strong>${wk.bestScore}</strong> (${wk.bestCandidates})
         </p>
@@ -1032,6 +1103,43 @@ function renderIndividualReport() {
 
   // Render Score Breakdown & Self-Evaluation Table
   const breakdownTbody = document.getElementById("ind-score-breakdown-tbody");
+  
+  // Render dynamic headers for individual scorecard
+  const breakdownThead = document.getElementById("individual-scorecard-thead");
+  if (breakdownThead) {
+    if (accEnabled) {
+      breakdownThead.innerHTML = `
+        <tr>
+          <th>หัวข้อสอบ (พาร์ท)</th>
+          <th>คะแนนของฉัน</th>
+          <th>คะแนนเต็ม</th>
+          <th>คิดเป็นร้อยละ</th>
+          <th>ข้อที่ทำ</th>
+          <th>% Accuracy</th>
+          <th>ค่าเฉลี่ยกลุ่ม</th>
+          <th>ส่วนต่างจากเฉลี่ย</th>
+          <th>คะแนนสูงสุด</th>
+          <th>อันดับในพาร์ท</th>
+          <th>ระดับการประเมิน</th>
+        </tr>
+      `;
+    } else {
+      breakdownThead.innerHTML = `
+        <tr>
+          <th>หัวข้อสอบ (พาร์ท)</th>
+          <th>คะแนนของฉัน</th>
+          <th>คะแนนเต็ม</th>
+          <th>คิดเป็นร้อยละ</th>
+          <th>ค่าเฉลี่ยกลุ่ม</th>
+          <th>ส่วนต่างจากเฉลี่ย</th>
+          <th>คะแนนสูงสุด</th>
+          <th>อันดับในพาร์ท</th>
+          <th>ระดับการประเมิน</th>
+        </tr>
+      `;
+    }
+  }
+  
   if (breakdownTbody) {
     breakdownTbody.innerHTML = "";
     
@@ -1050,6 +1158,10 @@ function renderIndividualReport() {
       const allScoresInPart = mockScores.map(s => s.scores[part.name] || 0);
       allScoresInPart.sort((a, b) => b - a);
       const partRank = allScoresInPart.indexOf(scoreVal) + 1;
+      
+      // Calculate part accuracy
+      const attempted = candScore.scores[part.name + "_attempted"];
+      const partAcc = (attempted !== undefined && attempted !== null && attempted > 0) ? (scoreVal / attempted) * 100 : null;
       
       // Calculate diff from average
       const diff = scoreVal - average;
@@ -1076,6 +1188,10 @@ function renderIndividualReport() {
         <td class="score-cell" style="font-weight: 600;">${scoreVal}</td>
         <td style="color: var(--text-muted);">${part.max}</td>
         <td class="score-cell" style="font-weight: 600;">${pct.toFixed(0)}%</td>
+        ${accEnabled ? `
+          <td style="font-weight: 500;">${attempted !== undefined && attempted !== null ? attempted : '-'}</td>
+          <td class="score-cell" style="color: var(--color-primary); font-weight: 600;">${partAcc !== null ? partAcc.toFixed(1) + '%' : '-'}</td>
+        ` : ""}
         <td style="font-weight: 500;">${average.toFixed(1)}</td>
         <td ${diffClass}>${diffSign}</td>
         <td style="font-weight: 500;">${maxScore}</td>
@@ -1101,13 +1217,32 @@ function generateScoreInputFields() {
   const mock = db.mocks.find(m => m.name === selectMock);
   if (!mock) return;
   
+  const accEnabled = isAccuracyEnabled(selectMock);
+  
   mock.parts.forEach(part => {
     const div = document.createElement("div");
     div.className = "form-group";
-    div.innerHTML = `
-      <label>${part.name} (คะแนนเต็ม ${part.max})</label>
-      <input type="number" class="form-control score-part-input" data-part="${part.name}" max="${part.max}" min="0" placeholder="กรอกคะแนนที่ได้">
-    `;
+    
+    if (accEnabled) {
+      div.innerHTML = `
+        <label style="font-weight: 600;">${part.name} (คะแนนเต็ม ${part.max})</label>
+        <div style="display: flex; gap: 0.8rem; margin-top: 0.2rem;">
+          <div style="flex: 1;">
+            <span style="font-size: 0.75rem; color: var(--text-muted);">จำนวนข้อที่ทำ</span>
+            <input type="number" class="form-control score-part-attempted-input" data-part="${part.name}" min="0" placeholder="ข้อที่ทำ">
+          </div>
+          <div style="flex: 1;">
+            <span style="font-size: 0.75rem; color: var(--text-muted);">จำนวนข้อที่ถูก (คะแนน)</span>
+            <input type="number" class="form-control score-part-input" data-part="${part.name}" max="${part.max}" min="0" placeholder="คะแนนที่ได้">
+          </div>
+        </div>
+      `;
+    } else {
+      div.innerHTML = `
+        <label>${part.name} (คะแนนเต็ม ${part.max})</label>
+        <input type="number" class="form-control score-part-input" data-part="${part.name}" max="${part.max}" min="0" placeholder="กรอกคะแนนที่ได้">
+      `;
+    }
     container.appendChild(div);
   });
   
@@ -1126,16 +1261,31 @@ function fillCandidateScoresToForm() {
     inputs.forEach(input => {
       input.value = "";
     });
+    const attemptedInputs = document.querySelectorAll(".score-part-attempted-input");
+    attemptedInputs.forEach(input => {
+      input.value = "";
+    });
     return;
   }
   
   const existingScore = db.scores.find(s => s.mockName === selectMock && s.candidateName === candidateName);
   const inputs = document.querySelectorAll(".score-part-input");
+  const attemptedInputs = document.querySelectorAll(".score-part-attempted-input");
   
   inputs.forEach(input => {
     const partName = input.getAttribute("data-part");
     if (existingScore && existingScore.scores[partName] !== undefined) {
       input.value = existingScore.scores[partName];
+    } else {
+      input.value = "";
+    }
+  });
+  
+  attemptedInputs.forEach(input => {
+    const partName = input.getAttribute("data-part");
+    const attemptedKey = partName + "_attempted";
+    if (existingScore && existingScore.scores[attemptedKey] !== undefined) {
+      input.value = existingScore.scores[attemptedKey];
     } else {
       input.value = "";
     }
@@ -1358,7 +1508,17 @@ function editMockLocally(oldName, newName, parts, renames) {
       if (s.mockName === newName) {
         let updatedScores = {};
         for (let partName in s.scores) {
-          let newPartName = renames[partName] !== undefined ? renames[partName] : partName;
+          let newPartName = partName;
+          if (partName.endsWith("_attempted")) {
+            const baseName = partName.substring(0, partName.length - 10);
+            if (renames[baseName] !== undefined) {
+              newPartName = renames[baseName] + "_attempted";
+            }
+          } else {
+            if (renames[partName] !== undefined) {
+              newPartName = renames[partName];
+            }
+          }
           updatedScores[newPartName] = s.scores[partName];
         }
         s.scores = updatedScores;
@@ -1376,8 +1536,15 @@ function editMockLocally(oldName, newName, parts, renames) {
     if (s.mockName === newName) {
       let cleanedScores = {};
       for (let partName in s.scores) {
-        if (partNamesList.includes(partName)) {
-          cleanedScores[partName] = s.scores[partName];
+        if (partName.endsWith("_attempted")) {
+          const baseName = partName.substring(0, partName.length - 10);
+          if (partNamesList.includes(baseName)) {
+            cleanedScores[partName] = s.scores[partName];
+          }
+        } else {
+          if (partNamesList.includes(partName)) {
+            cleanedScores[partName] = s.scores[partName];
+          }
         }
       }
       s.scores = cleanedScores;
@@ -1406,8 +1573,18 @@ async function submitScore(event) {
   }
   
   const inputs = document.querySelectorAll(".score-part-input");
+  const attemptedInputs = document.querySelectorAll(".score-part-attempted-input");
   const scores = {};
   let valid = true;
+  
+  // Create a map for quick attempted input lookup by part name
+  const attemptedMap = {};
+  attemptedInputs.forEach(input => {
+    const partName = input.getAttribute("data-part");
+    attemptedMap[partName] = input;
+  });
+  
+  const accEnabled = isAccuracyEnabled(mockName);
   
   inputs.forEach(input => {
     const partName = input.getAttribute("data-part");
@@ -1426,6 +1603,29 @@ async function submitScore(event) {
     }
     
     scores[partName] = val;
+    
+    if (accEnabled) {
+      const attInput = attemptedMap[partName];
+      if (attInput) {
+        const attVal = parseInt(attInput.value);
+        if (isNaN(attVal)) {
+          showToast(`กรุณากรอกจำนวนข้อที่ทำในส่วน ${partName}`, "error");
+          valid = false;
+          return;
+        }
+        if (attVal < 0) {
+          showToast(`จำนวนข้อที่ทำในส่วน ${partName} ต้องไม่น้อยกว่า 0`, "error");
+          valid = false;
+          return;
+        }
+        if (attVal < val) {
+          showToast(`จำนวนข้อที่ทำในส่วน ${partName} (${attVal}) ต้องไม่น้อยกว่าจำนวนข้อที่ถูก (${val})`, "error");
+          valid = false;
+          return;
+        }
+        scores[partName + "_attempted"] = attVal;
+      }
+    }
   });
   
   if (!valid) return;

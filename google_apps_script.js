@@ -165,9 +165,17 @@ function editMock(oldMockName, newMockName, parts, partRenames) {
       for (var i = 0; i < sValuesParts.length; i++) {
         var rowMock = sValuesParts[i][0];
         var rowPart = sValuesParts[i][2];
-        if (rowMock === newMockName && partRenames[rowPart] !== undefined) {
-          sValuesParts[i][2] = partRenames[rowPart];
-          changed = true;
+        if (rowMock === newMockName) {
+          if (partRenames[rowPart] !== undefined) {
+            sValuesParts[i][2] = partRenames[rowPart];
+            changed = true;
+          } else if (rowPart.indexOf("_attempted") !== -1) {
+            var basePart = rowPart.substring(0, rowPart.indexOf("_attempted"));
+            if (partRenames[basePart] !== undefined) {
+              sValuesParts[i][2] = partRenames[basePart] + "_attempted";
+              changed = true;
+            }
+          }
         }
       }
       if (changed) {
@@ -192,7 +200,11 @@ function editMock(oldMockName, newMockName, parts, partRenames) {
   }
   
   // 5. Delete score entries for parts that were removed in the edit
-  var partNamesList = parts.map(function(p) { return p.name; });
+  var partNamesList = [];
+  for (var i = 0; i < parts.length; i++) {
+    partNamesList.push(parts[i].name);
+    partNamesList.push(parts[i].name + "_attempted");
+  }
   deleteRowsByCondition(scoresSheet, function(row) {
     return row[1] === newMockName && partNamesList.indexOf(row[3]) === -1;
   });
