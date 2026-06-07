@@ -194,11 +194,11 @@
 
       <div class="candidate-insights-grid" id="individual-analytics-panel" style="display:none;">
         
-        <!-- Left Column: User Card & Target Tracker -->
+        <!-- Left Column: User Card -->
         <div style="display:flex; flex-direction:column; gap:1.5rem;">
           
           <!-- Student Card -->
-          <div class="glass-card" style="background: linear-gradient(135deg, rgba(20, 27, 45, 0.9), rgba(13, 18, 30, 0.9));">
+          <div class="glass-card" style="background: linear-gradient(135deg, rgba(20, 27, 45, 0.9), rgba(13, 18, 30, 0.9)); height: 100%; display: flex; flex-direction: column; justify-content: center; min-height: 250px;">
             <div class="avatar-header">
               <div class="avatar-icon" id="ind-avatar">U</div>
               <div>
@@ -225,50 +225,60 @@
                 <div class="card-value" id="ind-avg" style="font-size: 1.5rem;">-</div>
               </div>
             </div>
-            
-            <!-- Target Progress Card -->
-            <div class="target-tracker-card">
-              <div class="target-header">
-                <div>
-                  <span style="font-weight: 600; font-size:0.95rem;">เป้าหมายคะแนนดิบสะสม</span>
-                  <span class="sync-badge online" id="target-success-badge" style="display:none; padding: 0.1rem 0.5rem; font-size: 0.7rem;"><i class="fa-solid fa-check"></i> สำเร็จ!</span>
-                </div>
-                <div class="target-input-wrapper">
-                  <input type="number" id="target-score-input" class="target-input" aria-label="เป้าหมายคะแนน">
-                  <button class="btn" onclick="updateTargetScore()" style="padding: 0.3rem 0.6rem; border-radius: 8px; font-size: 0.8rem;"><i class="fa-solid fa-floppy-disk"></i></button>
-                </div>
-              </div>
-              <div class="progress-track" style="margin: 0.5rem 0;">
-                <div class="progress-fill" id="target-progress-fill" style="width: 0%"></div>
-              </div>
-              <div style="display:flex; justify-content:space-between; font-size: 0.8rem; color:var(--text-muted);">
-                <span>ทำได้จริง: <strong id="target-progress-text">-</strong></span>
-                <span>บรรลุเป้าหมาย: <strong id="target-progress-percent">0%</strong></span>
-              </div>
-            </div>
           </div>
           
         </div>
         
-        <!-- Right Column: Strengths & Weaknesses -->
-        <div style="display:flex; flex-direction:column; gap:1.5rem;">
+        <!-- Right Column: Combined Insights (Strengths & Weaknesses in one box) -->
+        <div style="display:flex; flex-direction:column;">
           
-          <!-- Strengths (Top 3) -->
-          <div class="glass-card">
-            <h3 style="margin-bottom:1rem; display:flex; align-items:center; gap:0.5rem; color:var(--color-success);"><i class="fa-solid fa-circle-arrow-up"></i> จุดแข็ง 3 อันดับแรก</h3>
-            <div class="insights-list" id="strengths-list">
-              <!-- Loaded dynamically -->
+          <div class="glass-card" style="height: 100%;">
+            <div class="insights-dual-grid">
+              
+              <!-- Strengths (Left Column) -->
+              <div>
+                <h3 style="margin-bottom:1rem; display:flex; align-items:center; gap:0.5rem; color:var(--color-success);"><i class="fa-solid fa-circle-arrow-up"></i> จุดแข็ง 3 อันดับแรก</h3>
+                <div class="insights-list" id="strengths-list">
+                  <!-- Loaded dynamically -->
+                </div>
+              </div>
+              
+              <!-- Weaknesses (Right Column) -->
+              <div>
+                <h3 style="margin-bottom:1rem; display:flex; align-items:center; gap:0.5rem; color:var(--color-danger);"><i class="fa-solid fa-circle-arrow-down"></i> จุดอ่อน 3 อันดับ</h3>
+                <div class="insights-list" id="weaknesses-list">
+                  <!-- Loaded dynamically -->
+                </div>
+              </div>
+              
             </div>
           </div>
           
-          <!-- Weaknesses (Bottom 3) -->
-          <div class="glass-card">
-            <h3 style="margin-bottom:1rem; display:flex; align-items:center; gap:0.5rem; color:var(--color-danger);"><i class="fa-solid fa-circle-arrow-down"></i> จุดอ่อน 3 อันดับ</h3>
-            <div class="insights-list" id="weaknesses-list">
-              <!-- Loaded dynamically -->
-            </div>
-          </div>
+        </div>
           
+        <!-- Bottom Full Width Score Breakdown & Evaluation Table -->
+        <div class="glass-card" style="margin-top: 1.5rem; grid-column: 1 / -1;" id="ind-score-breakdown-card">
+          <h3 style="margin-bottom:1rem; display:flex; align-items:center; gap:0.5rem;"><i class="fa-solid fa-list-check" style="color:var(--color-primary);"></i> รายละเอียดคะแนน & การประเมินตนเองรายหัวข้อ</h3>
+          <div class="table-responsive">
+            <table class="score-table">
+              <thead>
+                <tr>
+                  <th>หัวข้อสอบ (พาร์ท)</th>
+                  <th>คะแนนของฉัน</th>
+                  <th>คะแนนเต็ม</th>
+                  <th>คิดเป็นร้อยละ</th>
+                  <th>ค่าเฉลี่ยกลุ่ม</th>
+                  <th>ส่วนต่างจากเฉลี่ย</th>
+                  <th>คะแนนสูงสุด</th>
+                  <th>อันดับในพาร์ท</th>
+                  <th>ระดับการประเมิน</th>
+                </tr>
+              </thead>
+              <tbody id="ind-score-breakdown-tbody">
+                <!-- Loaded dynamically -->
+              </tbody>
+            </table>
+          </div>
         </div>
         
       </div>

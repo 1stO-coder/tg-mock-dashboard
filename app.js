@@ -643,8 +643,8 @@ function renderRadarSelector() {
   // We want to store selected check states, defaulting to show at least the selectedCandidate and average
   mockScores.forEach((s, idx) => {
     const div = document.createElement("div");
-    const activeClass = s.candidateName === selectedCandidateName ? "active" : "";
-    const isChecked = s.candidateName === selectedCandidateName ? "checked" : "";
+    const activeClass = "active";
+    const isChecked = "checked";
     
     // Choose colors dynamically for candidates
     const color = getCandidateColor(s.candidateName);
@@ -661,25 +661,23 @@ function renderRadarSelector() {
 }
 
 function getCandidateColor(name) {
-  // Simple deterministic color generator
+  const mockScores = db.scores.filter(s => s.mockName === selectedMockName);
+  mockScores.sort((a, b) => a.candidateName.localeCompare(b.candidateName));
+  const idx = mockScores.findIndex(s => s.candidateName === name);
   const colors = [
-    '#6366f1', // Indigo
-    '#ec4899', // Pink
-    '#10b981', // Emerald
-    '#f59e0b', // Amber
-    '#3b82f6', // Blue
-    '#8b5cf6', // Violet
-    '#ef4444', // Red
-    '#06b6d4', // Cyan
-    '#14b8a6', // Teal
-    '#f97316'  // Orange
+    '#f43f5e', // Vivid Rose / Pink
+    '#06b6d4', // Neon Cyan / Light Blue
+    '#f59e0b', // Bright Amber / Yellow-Gold
+    '#10b981', // Emerald Green
+    '#a855f7', // Electric Violet / Purple
+    '#f97316', // Bright Orange
+    '#3b82f6', // Bright Royal Blue
+    '#ef4444', // Crimson Red
+    '#00ffcc', // Vibrant Teal / Turquoise
+    '#eab308'  // Pure Yellow
   ];
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) {
-    hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  const index = Math.abs(hash) % colors.length;
-  return colors[index];
+  if (idx === -1) return '#ffffff';
+  return colors[idx % colors.length];
 }
 
 function updateRadarChart() {
@@ -1032,35 +1030,61 @@ function renderIndividualReport() {
     weaknessesContainer.appendChild(div);
   });
 
-  
-  // Target Progress Calculation
-  const targetKey = `${selectedMockName}|||${selectedCandidateName}`;
-  const targetVal = targetScores[targetKey] || Math.round(stats.rawMax * 0.8); // Default target is 80%
-  document.getElementById("target-score-input").value = targetVal;
-  
-  const targetPct = targetVal > 0 ? (stats.rawTotal / targetVal) * 100 : 0;
-  
-  document.getElementById("target-progress-text").textContent = `${stats.rawTotal} / ${targetVal}`;
-  document.getElementById("target-progress-percent").textContent = `${targetPct.toFixed(0)}%`;
-  
-  const fill = document.getElementById("target-progress-fill");
-  fill.style.width = `${Math.min(targetPct, 100)}%`;
-  if (targetPct >= 100) {
-    fill.style.background = "linear-gradient(90deg, var(--color-success), #059669)";
-    document.getElementById("target-success-badge").style.display = "inline";
-  } else {
-    fill.style.background = "linear-gradient(90deg, var(--color-primary), var(--color-secondary))";
-    document.getElementById("target-success-badge").style.display = "none";
+  // Render Score Breakdown & Self-Evaluation Table
+  const breakdownTbody = document.getElementById("ind-score-breakdown-tbody");
+  if (breakdownTbody) {
+    breakdownTbody.innerHTML = "";
+    
+    currentMock.parts.forEach(part => {
+      const scoreVal = candScore.scores[part.name] || 0;
+      const pct = part.max > 0 ? (scoreVal / part.max) * 100 : 0;
+      
+      // Calculate group average
+      const sum = mockScores.reduce((acc, s) => acc + (s.scores[part.name] || 0), 0);
+      const average = mockScores.length > 0 ? sum / mockScores.length : 0;
+      
+      // Calculate max score for this part
+      const maxScore = mockScores.length > 0 ? Math.max(...mockScores.map(s => s.scores[part.name] || 0)) : 0;
+      
+      // Calculate part rank
+      const allScoresInPart = mockScores.map(s => s.scores[part.name] || 0);
+      allScoresInPart.sort((a, b) => b - a);
+      const partRank = allScoresInPart.indexOf(scoreVal) + 1;
+      
+      // Calculate diff from average
+      const diff = scoreVal - average;
+      const diffSign = diff >= 0 ? `+${diff.toFixed(1)}` : `${diff.toFixed(1)}`;
+      const diffClass = diff >= 0 ? "style='color: var(--color-success); font-weight: bold;'" : "style='color: var(--color-danger); font-weight: bold;'";
+      
+      // Performance Level
+      let perfLevel = "ต้องปรับปรุง";
+      let perfClass = "style='color: var(--color-danger); font-weight: bold;'";
+      if (pct >= 80) {
+        perfLevel = "ดีเยี่ยม";
+        perfClass = "style='color: var(--color-success); font-weight: bold;'";
+      } else if (pct >= 65) {
+        perfLevel = "ดี";
+        perfClass = "style='color: #3b82f6; font-weight: bold;'";
+      } else if (pct >= 50) {
+        perfLevel = "ผ่านเกณฑ์";
+        perfClass = "style='color: var(--color-warning); font-weight: bold;'";
+      }
+      
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td style="font-weight: 600;">${part.name}</td>
+        <td class="score-cell" style="font-weight: 600;">${scoreVal}</td>
+        <td style="color: var(--text-muted);">${part.max}</td>
+        <td class="score-cell" style="font-weight: 600;">${pct.toFixed(0)}%</td>
+        <td style="font-weight: 500;">${average.toFixed(1)}</td>
+        <td ${diffClass}>${diffSign}</td>
+        <td style="font-weight: 500;">${maxScore}</td>
+        <td style="font-weight: 500;">${partRank} <span style="font-size: 0.75rem; color: var(--text-muted);">/ ${mockScores.length}</span></td>
+        <td ${perfClass}>${perfLevel}</td>
+      `;
+      breakdownTbody.appendChild(tr);
+    });
   }
-}
-
-function updateTargetScore() {
-  const val = parseInt(document.getElementById("target-score-input").value) || 0;
-  const targetKey = `${selectedMockName}|||${selectedCandidateName}`;
-  targetScores[targetKey] = val;
-  localStorage.setItem("tg_mock_targets", JSON.stringify(targetScores));
-  renderIndividualReport();
-  showToast("อัปเดตเป้าหมายคะแนนแล้ว", "success");
 }
 
 function printReport() {

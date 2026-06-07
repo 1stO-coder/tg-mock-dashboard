@@ -364,6 +364,11 @@ header {
   animation: fadeIn 0.4s ease;
 }
 
+#individual {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
@@ -605,8 +610,21 @@ header {
 /* Individual Insights */
 .candidate-insights-grid {
   display: grid;
-  grid-template-columns: 1.5fr 2fr;
+  grid-template-columns: 1fr 2.2fr;
   gap: 1.5rem;
+}
+
+.insights-dual-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .insights-dual-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
 }
 
 @media (max-width: 1024px) {
@@ -1037,6 +1055,8 @@ header {
   #individual.tab-content {
     display: block !important;
     opacity: 1 !important;
+    max-width: 100% !important;
+    margin: 0 !important;
   }
   
   .glass-card {
