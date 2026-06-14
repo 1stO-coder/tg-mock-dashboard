@@ -84,6 +84,7 @@
       <button class="tab-btn active" data-tab="leaderboard"><i class="fa-solid fa-trophy"></i> สรุปผลคะแนน & การจัดอันดับ</button>
       <button class="tab-btn" data-tab="radar"><i class="fa-solid fa-circle-nodes"></i> เปรียบเทียบภาพรวม (Radar & Grid)</button>
       <button class="tab-btn" data-tab="individual"><i class="fa-solid fa-user-gear"></i> วิเคราะห์จุดแข็งจุดอ่อนรายคน</button>
+      <button class="tab-btn" data-tab="development"><i class="fa-solid fa-chart-line"></i> วิเคราะห์พัฒนาการ</button>
       <button class="tab-btn" data-tab="manage"><i class="fa-solid fa-file-pen"></i> จัดการ Mock & กรอกคะแนน</button>
     </nav>
 
@@ -284,7 +285,31 @@
       </div>
     </div>
 
-    <!-- TAB 4: MANAGE & INPUT -->
+    <!-- TAB 4: DEVELOPMENT CHART -->
+    <div id="development" class="tab-content">
+      <div class="radar-layout">
+        
+        <!-- Line Chart Card -->
+        <div class="glass-card">
+          <h3 style="margin-bottom:0.2rem; display:flex; align-items:center; gap:0.5rem;"><i class="fa-solid fa-chart-line" style="color:var(--color-primary);"></i> กราฟพัฒนาการคะแนน (%) รายบุคคล</h3>
+          <p class="subtitle" style="margin-bottom:1.5rem;">แนวโน้มคะแนนเฉลี่ยร้อยละ (%) ในแต่ละชุดข้อสอบ โดยมีป้ายลำดับคะแนนกำกับแต่ละวิชา</p>
+          <div class="chart-container" style="min-height: 400px; height: 50vh;">
+            <canvas id="devChart"></canvas>
+          </div>
+        </div>
+        
+        <!-- Selection List Card -->
+        <div class="glass-card">
+          <h3 style="margin-bottom:1rem; display:flex; align-items:center; gap:0.5rem;"><i class="fa-solid fa-square-check" style="color:var(--color-success);"></i> เลือกผู้สอบเพื่อเปรียบเทียบ</h3>
+          <div id="dev-candidates-list" class="radar-selector">
+            <!-- Checkboxes loaded dynamically -->
+          </div>
+        </div>
+        
+      </div>
+    </div>
+
+    <!-- TAB 5: MANAGE & INPUT -->
     <div id="manage" class="tab-content">
       <div class="manage-grid">
         

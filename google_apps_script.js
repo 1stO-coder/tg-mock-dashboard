@@ -216,9 +216,9 @@ function saveScore(mockName, candidateName, scores) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sheet = ss.getSheetByName("Scores") || createScoresSheet(ss);
   
-  // Remove existing scores for this candidate under this mock
+  // Remove existing scores for this candidate under this mock (case-insensitive)
   deleteRowsByCondition(sheet, function(row) {
-    return row[1] === mockName && row[2] === candidateName;
+    return row[1] === mockName && row[2].toString().toUpperCase() === candidateName.toString().toUpperCase();
   });
   
   // Append new scores
@@ -239,7 +239,7 @@ function deleteScore(mockName, candidateName) {
   var sheet = ss.getSheetByName("Scores") || createScoresSheet(ss);
   
   deleteRowsByCondition(sheet, function(row) {
-    return row[1] === mockName && row[2] === candidateName;
+    return row[1] === mockName && row[2].toString().toUpperCase() === candidateName.toString().toUpperCase();
   });
   return "Scores for candidate '" + candidateName + "' in mock '" + mockName + "' deleted.";
 }
