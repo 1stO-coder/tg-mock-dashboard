@@ -1686,16 +1686,26 @@ function getCandidateColor(name) {
   allCandidates.sort((a, b) => a.localeCompare(b));
   const idx = allCandidates.indexOf(name);
   const colors = [
-    '#f43f5e', // Vivid Rose / Pink
-    '#06b6d4', // Neon Cyan / Light Blue
-    '#f59e0b', // Bright Amber / Yellow-Gold
-    '#10b981', // Emerald Green
-    '#a855f7', // Electric Violet / Purple
-    '#f97316', // Bright Orange
-    '#3b82f6', // Bright Royal Blue
-    '#ef4444', // Crimson Red
-    '#00ffcc', // Vibrant Teal / Turquoise
-    '#eab308'  // Pure Yellow
+    '#ff3366', // Coral Pink
+    '#2979ff', // Vivid Royal Blue
+    '#00e676', // Bright Spring Green
+    '#ff9100', // Deep Amber Orange
+    '#e040fb', // Vibrant Purple-Magenta
+    '#00ffff', // Bright Cyan
+    '#ffea00', // Vibrant Lemon Yellow
+    '#ff1744', // Vivid Crimson Red
+    '#1de9b6', // Neon Turquoise
+    '#b366ff', // Lavender Purple
+    '#99ff33', // Volt Lime
+    '#33ccff', // Light Sky Blue
+    '#ff6633', // Neon Salmon Orange
+    '#00ffcc', // Electric Teal
+    '#ff99e6', // Light Pink
+    '#76ff03', // Vibrant Grass Green
+    '#d500f9', // Deep Magenta
+    '#00b0ff', // Vivid Cyan
+    '#ff5050', // Soft Red
+    '#33ff77'  // Bright Mint Green
   ];
   if (idx === -1) return '#ffffff';
   return colors[idx % colors.length];
@@ -2153,7 +2163,7 @@ function renderDevelopmentChart() {
   });
   
   const isDark = !document.body.classList.contains("light-theme");
-  const meanColor = isDark ? "rgba(244, 63, 94, 0.85)" : "rgba(225, 29, 72, 0.85)"; // Rose-500/600 for premium aesthetics
+  const meanColor = isDark ? "rgba(255, 255, 255, 0.85)" : "rgba(31, 41, 55, 0.85)"; // White in dark theme, dark gray/black in light theme
   
   // Push group mean line if there is any mock data
   datasets.push({
