@@ -1,0 +1,695 @@
+{
+  "mocks": [
+    {
+      "name": "Mock TG5",
+      "parts": [
+        { "name": "Series pic", "max": 22 },
+        { "name": "Non-verbal Reasoning", "max": 28 },
+        { "name": "3D cube", "max": 10 },
+        { "name": "Perceptual speed", "max": 40 },
+        { "name": "Estimating", "max": 33 },
+        { "name": "Shape scanning", "max": 52 },
+        { "name": "Cube Folding", "max": 20 },
+        { "name": "Series Number", "max": 32 },
+        { "name": "Scanning/Comparing", "max": 40 },
+        { "name": "Pair of scales", "max": 20 },
+        { "name": "Interruption", "max": 25 },
+        { "name": "STM", "max": 11 }
+      ]
+    },
+    {
+      "name": "Mock TG1",
+      "parts": [
+        { "name": "Series Picture", "max": 30 },
+        { "name": "2D Puzzle", "max": 21 },
+        { "name": "Deviation Scanning", "max": 30 },
+        { "name": "Series Number", "max": 33 },
+        { "name": "Block Folding", "max": 29 },
+        { "name": "STM Passage", "max": 21 },
+        { "name": "Hidden Image", "max": 15 },
+        { "name": "Aircraft Orientation", "max": 20 },
+        { "name": "Block Counting", "max": 34 },
+        { "name": "Key Fitting", "max": 8 },
+        { "name": "Oblique View", "max": 30 },
+        { "name": "Shape Scanning", "max": 52 },
+        { "name": "Approximation", "max": 30 }
+      ]
+    },
+    {
+      "name": "Mock TG2",
+      "parts": [
+        { "name": "Abstract Reasoning", "max": 24 },
+        { "name": "Cube Assembly", "max": 20 },
+        { "name": "Series Number", "max": 15 },
+        { "name": "Deviation Scanning", "max": 30 },
+        { "name": "Box Folding", "max": 33 },
+        { "name": "STM Grid", "max": 28 },
+        { "name": "Interruption", "max": 45 },
+        { "name": "Block Rotation", "max": 25 },
+        { "name": "Number Scanning", "max": 100 },
+        { "name": "Oblique View", "max": 16 },
+        { "name": "Block Counting", "max": 30 },
+        { "name": "Numerical Estimation", "max": 35 },
+        { "name": "Spatial Apperception", "max": 35 },
+        { "name": "Key Fitting", "max": 10 }
+      ]
+    },
+    {
+      "name": "Mock TG3",
+      "parts": [
+        { "name": "Visual Logic", "max": 39 },
+        { "name": "2-D Puzzle", "max": 19 },
+        { "name": "Computer Checking", "max": 40 },
+        { "name": "Series Number", "max": 23 },
+        { "name": "Box Folding", "max": 30 },
+        { "name": "STM Passage", "max": 21 },
+        { "name": "Interruption", "max": 30 },
+        { "name": "Symbol & Condition", "max": 60 },
+        { "name": "Solid Figure Turning", "max": 27 },
+        { "name": "Aircraft Rotation", "max": 30 },
+        { "name": "Numerical Estimation", "max": 35 },
+        { "name": "Electrical Maze", "max": 20 },
+        { "name": "Systems", "max": 120 }
+      ]
+    },
+    {
+      "name": "Mock TG4",
+      "parts": [
+        { "name": "Logical Reasoning", "max": 25 },
+        { "name": "Deviation Scanning", "max": 30 },
+        { "name": "Cube Assembly", "max": 20 },
+        { "name": "Series Number", "max": 19 },
+        { "name": "Shape Scanning", "max": 52 },
+        { "name": "Box Folding", "max": 15 },
+        { "name": "STM", "max": 28 },
+        { "name": "Interruption", "max": 50 },
+        { "name": "Number Skill", "max": 40 },
+        { "name": "Logic Gates", "max": 20 },
+        { "name": "Block Rotation", "max": 25 },
+        { "name": "Cube Turning", "max": 18 },
+        { "name": "Key Fitting", "max": 10 },
+        { "name": "Tracing", "max": 29 }
+      ]
+    }
+  ],
+  "scores": [
+    {
+      "mockName": "Mock TG5",
+      "candidateName": "FH",
+      "scores": {
+        "Series pic": 22,
+        "Non-verbal Reasoning": 14,
+        "3D cube": 8,
+        "Perceptual speed": 40,
+        "Estimating": 32,
+        "Shape scanning": 40,
+        "Cube Folding": 18,
+        "Series Number": 29,
+        "Scanning/Comparing": 38,
+        "Pair of scales": 19,
+        "Interruption": 15,
+        "STM": 9
+      }
+    },
+    {
+      "mockName": "Mock TG5",
+      "candidateName": "เค้กนมสด",
+      "scores": {
+        "Series pic": 18,
+        "Non-verbal Reasoning": 13,
+        "3D cube": 7,
+        "Perceptual speed": 40,
+        "Estimating": 28,
+        "Shape scanning": 34,
+        "Cube Folding": 16,
+        "Series Number": 28,
+        "Scanning/Comparing": 36,
+        "Pair of scales": 11,
+        "Interruption": 12,
+        "STM": 11
+      }
+    },
+    {
+      "mockName": "Mock TG5",
+      "candidateName": "B",
+      "scores": {
+        "Series pic": 19,
+        "Non-verbal Reasoning": 13,
+        "3D cube": 7,
+        "Perceptual speed": 40,
+        "Estimating": 30,
+        "Shape scanning": 31,
+        "Cube Folding": 14,
+        "Series Number": 24,
+        "Scanning/Comparing": 35,
+        "Pair of scales": 6,
+        "Interruption": 12,
+        "STM": 8
+      }
+    },
+    {
+      "mockName": "Mock TG5",
+      "candidateName": "ATTOS",
+      "scores": {
+        "Series pic": 18,
+        "Non-verbal Reasoning": 15,
+        "3D cube": 6,
+        "Perceptual speed": 40,
+        "Estimating": 30,
+        "Shape scanning": 35,
+        "Cube Folding": 11,
+        "Series Number": 28,
+        "Scanning/Comparing": 36,
+        "Pair of scales": 12,
+        "Interruption": 12,
+        "STM": 8
+      }
+    },
+    {
+      "mockName": "Mock TG5",
+      "candidateName": "ST",
+      "scores": {
+        "Series pic": 18,
+        "Non-verbal Reasoning": 11,
+        "3D cube": 5,
+        "Perceptual speed": 40,
+        "Estimating": 33,
+        "Shape scanning": 32,
+        "Cube Folding": 11,
+        "Series Number": 32,
+        "Scanning/Comparing": 34,
+        "Pair of scales": 8,
+        "Interruption": 17,
+        "STM": 9
+      }
+    },
+    {
+      "mockName": "Mock TG1",
+      "candidateName": "Shabu",
+      "scores": {
+        "Series Picture": 20,
+        "2D Puzzle": 18,
+        "Deviation Scanning": 24,
+        "Series Number": 30,
+        "Block Folding": 28,
+        "STM Passage": 21,
+        "Hidden Image": 10,
+        "Aircraft Orientation": 19,
+        "Block Counting": 34,
+        "Key Fitting": 3,
+        "Oblique View": 28,
+        "Shape Scanning": 52,
+        "Approximation": 20
+      }
+    },
+    {
+      "mockName": "Mock TG1",
+      "candidateName": "ST",
+      "scores": {
+        "Series Picture": 19,
+        "2D Puzzle": 15,
+        "Deviation Scanning": 19,
+        "Series Number": 27,
+        "Block Folding": 29,
+        "STM Passage": 13,
+        "Hidden Image": 6,
+        "Aircraft Orientation": 19,
+        "Block Counting": 33,
+        "Key Fitting": 2,
+        "Oblique View": 23,
+        "Shape Scanning": 36,
+        "Approximation": 24
+      }
+    },
+    {
+      "mockName": "Mock TG1",
+      "candidateName": "Frame",
+      "scores": {
+        "Series Picture": 10,
+        "2D Puzzle": 18,
+        "Deviation Scanning": 14,
+        "Series Number": 11,
+        "Block Folding": 19,
+        "STM Passage": 11,
+        "Hidden Image": 4,
+        "Aircraft Orientation": 6,
+        "Block Counting": 21,
+        "Key Fitting": 3,
+        "Oblique View": 21,
+        "Shape Scanning": 31,
+        "Approximation": 19
+      }
+    },
+    {
+      "mockName": "Mock TG1",
+      "candidateName": "Chanol",
+      "scores": {
+        "Series Picture": 15,
+        "2D Puzzle": 15,
+        "Deviation Scanning": 19,
+        "Series Number": 26,
+        "Block Folding": 29,
+        "STM Passage": 15,
+        "Hidden Image": 12,
+        "Aircraft Orientation": 13,
+        "Block Counting": 24,
+        "Key Fitting": 3,
+        "Oblique View": 23,
+        "Shape Scanning": 41,
+        "Approximation": 24
+      }
+    },
+    {
+      "mockName": "Mock TG1",
+      "candidateName": "Holala",
+      "scores": {
+        "Series Picture": 19,
+        "2D Puzzle": 20,
+        "Deviation Scanning": 26,
+        "Series Number": 27,
+        "Block Folding": 28,
+        "STM Passage": 12,
+        "Hidden Image": 10,
+        "Aircraft Orientation": 19,
+        "Block Counting": 34,
+        "Key Fitting": 3,
+        "Oblique View": 28,
+        "Shape Scanning": 23,
+        "Approximation": 25
+      }
+    },
+    {
+      "mockName": "Mock TG1",
+      "candidateName": "Allstar",
+      "scores": {
+        "Series Picture": 17,
+        "2D Puzzle": 16,
+        "Deviation Scanning": 19,
+        "Series Number": 24,
+        "Block Folding": 29,
+        "STM Passage": 9,
+        "Hidden Image": 7,
+        "Aircraft Orientation": 10,
+        "Block Counting": 30,
+        "Key Fitting": 1,
+        "Oblique View": 22,
+        "Shape Scanning": 25,
+        "Approximation": 17
+      }
+    },
+    {
+      "mockName": "Mock TG2",
+      "candidateName": "FH",
+      "scores": {
+        "Abstract Reasoning": 11,
+        "Cube Assembly": 11,
+        "Series Number": 12,
+        "Deviation Scanning": 20,
+        "Box Folding": 32,
+        "STM Grid": 16,
+        "Interruption": 33,
+        "Block Rotation": 20,
+        "Number Scanning": 37,
+        "Oblique View": 15,
+        "Block Counting": 30,
+        "Numerical Estimation": 24,
+        "Spatial Apperception": 18,
+        "Key Fitting": 4
+      }
+    },
+    {
+      "mockName": "Mock TG2",
+      "candidateName": "Apo",
+      "scores": {
+        "Abstract Reasoning": 10,
+        "Cube Assembly": 8,
+        "Series Number": 13,
+        "Deviation Scanning": 15,
+        "Box Folding": 32,
+        "STM Grid": 16,
+        "Interruption": 29,
+        "Block Rotation": 25,
+        "Number Scanning": 31,
+        "Oblique View": 16,
+        "Block Counting": 29,
+        "Numerical Estimation": 22,
+        "Spatial Apperception": 34,
+        "Key Fitting": 4
+      }
+    },
+    {
+      "mockName": "Mock TG2",
+      "candidateName": "Shabu",
+      "scores": {
+        "Abstract Reasoning": 20,
+        "Cube Assembly": 17,
+        "Series Number": 12,
+        "Deviation Scanning": 25,
+        "Box Folding": 33,
+        "STM Grid": 25,
+        "Interruption": 43,
+        "Block Rotation": 25,
+        "Number Scanning": 33,
+        "Oblique View": 16,
+        "Block Counting": 30,
+        "Numerical Estimation": 19,
+        "Spatial Apperception": 34,
+        "Key Fitting": 5
+      }
+    },
+    {
+      "mockName": "Mock TG2",
+      "candidateName": "Holala",
+      "scores": {
+        "Abstract Reasoning": 16,
+        "Cube Assembly": 9,
+        "Series Number": 11,
+        "Deviation Scanning": 17,
+        "Box Folding": 33,
+        "STM Grid": 14,
+        "Interruption": 27,
+        "Block Rotation": 25,
+        "Number Scanning": 16,
+        "Oblique View": 16,
+        "Block Counting": 29,
+        "Numerical Estimation": 19,
+        "Spatial Apperception": 33,
+        "Key Fitting": 5
+      }
+    },
+    {
+      "mockName": "Mock TG2",
+      "candidateName": "Ball",
+      "scores": {
+        "Abstract Reasoning": 13,
+        "Cube Assembly": 10,
+        "Series Number": 11,
+        "Deviation Scanning": 20,
+        "Box Folding": 32,
+        "STM Grid": 15,
+        "Interruption": 24,
+        "Block Rotation": 21,
+        "Number Scanning": 24,
+        "Oblique View": 16,
+        "Block Counting": 28,
+        "Numerical Estimation": 19,
+        "Spatial Apperception": 33,
+        "Key Fitting": 6
+      }
+    },
+    {
+      "mockName": "Mock TG2",
+      "candidateName": "ST",
+      "scores": {
+        "Abstract Reasoning": 13,
+        "Cube Assembly": 13,
+        "Series Number": 13,
+        "Deviation Scanning": 19,
+        "Box Folding": 31,
+        "STM Grid": 6,
+        "Interruption": 31,
+        "Block Rotation": 23,
+        "Number Scanning": 21,
+        "Oblique View": 10,
+        "Block Counting": 30,
+        "Numerical Estimation": 30,
+        "Spatial Apperception": 24,
+        "Key Fitting": 4
+      }
+    },
+    {
+      "mockName": "Mock TG3",
+      "candidateName": "FH",
+      "scores": {
+        "Visual Logic": 31,
+        "2-D Puzzle": 19,
+        "Computer Checking": 27,
+        "Series Number": 19,
+        "Box Folding": 21,
+        "STM Passage": 19,
+        "Interruption": 30,
+        "Symbol & Condition": 18,
+        "Solid Figure Turning": 24,
+        "Aircraft Rotation": 30,
+        "Numerical Estimation": 29,
+        "Electrical Maze": 13,
+        "Systems": 120
+      }
+    },
+    {
+      "mockName": "Mock TG3",
+      "candidateName": "ST",
+      "scores": {
+        "Visual Logic": 30,
+        "2-D Puzzle": 14,
+        "Computer Checking": 30,
+        "Series Number": 20,
+        "Box Folding": 23,
+        "STM Passage": 7,
+        "Interruption": 30,
+        "Symbol & Condition": 31,
+        "Solid Figure Turning": 23,
+        "Aircraft Rotation": 26,
+        "Numerical Estimation": 32,
+        "Electrical Maze": 6,
+        "Systems": 73
+      }
+    },
+    {
+      "mockName": "Mock TG3",
+      "candidateName": "Holala",
+      "scores": {
+        "Visual Logic": 37,
+        "2-D Puzzle": 19,
+        "Computer Checking": 29,
+        "Series Number": 15,
+        "Box Folding": 18,
+        "STM Passage": 17,
+        "Interruption": 29,
+        "Symbol & Condition": 31,
+        "Solid Figure Turning": 26,
+        "Aircraft Rotation": 16,
+        "Numerical Estimation": 21,
+        "Electrical Maze": 10,
+        "Systems": 82
+      }
+    },
+    {
+      "mockName": "Mock TG3",
+      "candidateName": "Shabu",
+      "scores": {
+        "Visual Logic": 35,
+        "2-D Puzzle": 17,
+        "Computer Checking": 34,
+        "Series Number": 17,
+        "Box Folding": 29,
+        "STM Passage": 21,
+        "Interruption": 29,
+        "Symbol & Condition": 53,
+        "Solid Figure Turning": 25,
+        "Aircraft Rotation": 30,
+        "Numerical Estimation": 18,
+        "Electrical Maze": 7,
+        "Systems": 88
+      }
+    },
+    {
+      "mockName": "Mock TG3",
+      "candidateName": "AllStar",
+      "scores": {
+        "Visual Logic": 27,
+        "2-D Puzzle": 16,
+        "Computer Checking": 27,
+        "Series Number": 14,
+        "Box Folding": 23,
+        "STM Passage": 10,
+        "Interruption": 29,
+        "Symbol & Condition": 23,
+        "Solid Figure Turning": 26,
+        "Aircraft Rotation": 5,
+        "Numerical Estimation": 19,
+        "Electrical Maze": 6,
+        "Systems": 81
+      }
+    },
+    {
+      "mockName": "Mock TG3",
+      "candidateName": "B",
+      "scores": {
+        "Visual Logic": 32,
+        "2-D Puzzle": 11,
+        "Computer Checking": 20,
+        "Series Number": 15,
+        "Box Folding": 17,
+        "STM Passage": 16,
+        "Interruption": 27,
+        "Symbol & Condition": 23,
+        "Solid Figure Turning": 22,
+        "Aircraft Rotation": 17,
+        "Numerical Estimation": 24,
+        "Electrical Maze": 10,
+        "Systems": 88
+      }
+    },
+    {
+      "mockName": "Mock TG4",
+      "candidateName": "Chanol",
+      "scores": {
+        "Logical Reasoning": 23,
+        "Deviation Scanning": 22,
+        "Cube Assembly": 14,
+        "Series Number": 17,
+        "Shape Scanning": 34,
+        "Box Folding": 14,
+        "STM": 21,
+        "Interruption": 49,
+        "Number Skill": 36,
+        "Logic Gates": 14,
+        "Block Rotation": 24,
+        "Cube Turning": 9,
+        "Key Fitting": 5,
+        "Tracing": 21
+      }
+    },
+    {
+      "mockName": "Mock TG4",
+      "candidateName": "Apo",
+      "scores": {
+        "Logical Reasoning": 18,
+        "Deviation Scanning": 19,
+        "Cube Assembly": 14,
+        "Series Number": 12,
+        "Shape Scanning": 28,
+        "Box Folding": 15,
+        "STM": 11,
+        "Interruption": 50,
+        "Number Skill": 31,
+        "Logic Gates": 20,
+        "Block Rotation": 25,
+        "Cube Turning": 11,
+        "Key Fitting": 7,
+        "Tracing": 25
+      }
+    },
+    {
+      "mockName": "Mock TG4",
+      "candidateName": "ST",
+      "scores": {
+        "Logical Reasoning": 18,
+        "Deviation Scanning": 20,
+        "Cube Assembly": 18,
+        "Series Number": 16,
+        "Shape Scanning": 32,
+        "Box Folding": 14,
+        "STM": 9,
+        "Interruption": 49,
+        "Number Skill": 32,
+        "Logic Gates": 16,
+        "Block Rotation": 25,
+        "Cube Turning": 13,
+        "Key Fitting": 4,
+        "Tracing": 23
+      }
+    },
+    {
+      "mockName": "Mock TG4",
+      "candidateName": "Shabu",
+      "scores": {
+        "Logical Reasoning": 25,
+        "Deviation Scanning": 25,
+        "Cube Assembly": 18,
+        "Series Number": 14,
+        "Shape Scanning": 47,
+        "Box Folding": 15,
+        "STM": 26,
+        "Interruption": 40,
+        "Number Skill": 31,
+        "Logic Gates": 19,
+        "Block Rotation": 25,
+        "Cube Turning": 15,
+        "Key Fitting": 6,
+        "Tracing": 18
+      }
+    },
+    {
+      "mockName": "Mock TG4",
+      "candidateName": "B",
+      "scores": {
+        "Logical Reasoning": 12,
+        "Deviation Scanning": 20,
+        "Cube Assembly": 7,
+        "Series Number": 12,
+        "Shape Scanning": 23,
+        "Box Folding": 14,
+        "STM": 18,
+        "Interruption": 50,
+        "Number Skill": 27,
+        "Logic Gates": 19,
+        "Block Rotation": 16,
+        "Cube Turning": 6,
+        "Key Fitting": 5,
+        "Tracing": 24
+      }
+    },
+    {
+      "mockName": "Mock TG4",
+      "candidateName": "Holala",
+      "scores": {
+        "Logical Reasoning": 22,
+        "Deviation Scanning": 23,
+        "Cube Assembly": 14,
+        "Series Number": 13,
+        "Shape Scanning": 25,
+        "Box Folding": 14,
+        "STM": 16,
+        "Interruption": 49,
+        "Number Skill": 27,
+        "Logic Gates": 19,
+        "Block Rotation": 23,
+        "Cube Turning": 8,
+        "Key Fitting": 6,
+        "Tracing": 23
+      }
+    },
+    {
+      "mockName": "Mock TG4",
+      "candidateName": "FH",
+      "scores": {
+        "Logical Reasoning": 23,
+        "Deviation Scanning": 25,
+        "Cube Assembly": 17,
+        "Series Number": 14,
+        "Shape Scanning": 44,
+        "Box Folding": 14,
+        "STM": 17,
+        "Interruption": 50,
+        "Number Skill": 29,
+        "Logic Gates": 18,
+        "Block Rotation": 23,
+        "Cube Turning": 15,
+        "Key Fitting": 6,
+        "Tracing": 21
+      }
+    },
+    {
+      "mockName": "Mock TG4",
+      "candidateName": "ATTOS",
+      "scores": {
+        "Logical Reasoning": 17,
+        "Deviation Scanning": 22,
+        "Cube Assembly": 14,
+        "Series Number": 8,
+        "Shape Scanning": 33,
+        "Box Folding": 11,
+        "STM": 15,
+        "Interruption": 50,
+        "Number Skill": 29,
+        "Logic Gates": 20,
+        "Block Rotation": 23,
+        "Cube Turning": 16,
+        "Key Fitting": 5,
+        "Tracing": 20
+      }
+    }
+  ]
+}

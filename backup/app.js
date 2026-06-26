@@ -4,901 +4,6 @@
 let DEFAULT_API_URL = "https://script.google.com/macros/s/AKfycbwWiC1Vagu2V_jMevuA0CZq0PyMIJGRy5EdeypQC3DhaT_O4NJL05g4gfZNGnxSRkdn/exec";
 let apiUrl = DEFAULT_API_URL;
 
-const DEFAULT_DB = {
-  "mocks": [
-    {
-      "name": "Mock TG5",
-      "parts": [
-        {
-          "name": "Series pic",
-          "max": 22
-        },
-        {
-          "name": "Non-verbal Reasoning",
-          "max": 28
-        },
-        {
-          "name": "3D cube",
-          "max": 10
-        },
-        {
-          "name": "Perceptual speed",
-          "max": 40
-        },
-        {
-          "name": "Estimating",
-          "max": 33
-        },
-        {
-          "name": "Shape scanning",
-          "max": 52
-        },
-        {
-          "name": "Cube Folding",
-          "max": 20
-        },
-        {
-          "name": "Series Number",
-          "max": 32
-        },
-        {
-          "name": "Scanning/Comparing",
-          "max": 40
-        },
-        {
-          "name": "Pair of scales",
-          "max": 20
-        },
-        {
-          "name": "Interruption",
-          "max": 25
-        },
-        {
-          "name": "STM",
-          "max": 11
-        }
-      ]
-    },
-    {
-      "name": "Mock TG1",
-      "parts": [
-        {
-          "name": "Series Picture",
-          "max": 30
-        },
-        {
-          "name": "2D Puzzle",
-          "max": 21
-        },
-        {
-          "name": "Deviation Scanning",
-          "max": 30
-        },
-        {
-          "name": "Series Number",
-          "max": 33
-        },
-        {
-          "name": "Block Folding",
-          "max": 29
-        },
-        {
-          "name": "STM Passage",
-          "max": 21
-        },
-        {
-          "name": "Hidden Image",
-          "max": 15
-        },
-        {
-          "name": "Aircraft Orientation",
-          "max": 20
-        },
-        {
-          "name": "Block Counting",
-          "max": 34
-        },
-        {
-          "name": "Key Fitting",
-          "max": 8
-        },
-        {
-          "name": "Oblique View",
-          "max": 30
-        },
-        {
-          "name": "Shape Scanning",
-          "max": 52
-        },
-        {
-          "name": "Approximation",
-          "max": 30
-        }
-      ]
-    },
-    {
-      "name": "Mock TG2",
-      "parts": [
-        {
-          "name": "Abstract Reasoning",
-          "max": 24
-        },
-        {
-          "name": "Cube Assembly",
-          "max": 20
-        },
-        {
-          "name": "Series Number",
-          "max": 15
-        },
-        {
-          "name": "Deviation Scanning",
-          "max": 30
-        },
-        {
-          "name": "Box Folding",
-          "max": 33
-        },
-        {
-          "name": "STM Grid",
-          "max": 28
-        },
-        {
-          "name": "Interruption",
-          "max": 45
-        },
-        {
-          "name": "Block Rotation",
-          "max": 25
-        },
-        {
-          "name": "Number Scanning",
-          "max": 100
-        },
-        {
-          "name": "Oblique View",
-          "max": 16
-        },
-        {
-          "name": "Block Counting",
-          "max": 30
-        },
-        {
-          "name": "Numerical Estimation",
-          "max": 35
-        },
-        {
-          "name": "Spatial Apperception",
-          "max": 35
-        },
-        {
-          "name": "Key Fitting",
-          "max": 10
-        }
-      ]
-    },
-    {
-      "name": "Mock TG3",
-      "parts": [
-        {
-          "name": "Visual Logic",
-          "max": 39
-        },
-        {
-          "name": "2-D Puzzle",
-          "max": 19
-        },
-        {
-          "name": "Computer Checking",
-          "max": 40
-        },
-        {
-          "name": "Series Number",
-          "max": 23
-        },
-        {
-          "name": "Box Folding",
-          "max": 30
-        },
-        {
-          "name": "STM Passage",
-          "max": 21
-        },
-        {
-          "name": "Interruption",
-          "max": 30
-        },
-        {
-          "name": "Symbol & Condition",
-          "max": 60
-        },
-        {
-          "name": "Solid Figure Turning",
-          "max": 27
-        },
-        {
-          "name": "Aircraft Rotation",
-          "max": 30
-        },
-        {
-          "name": "Numerical Estimation",
-          "max": 35
-        },
-        {
-          "name": "Electrical Maze",
-          "max": 20
-        },
-        {
-          "name": "Systems",
-          "max": 120
-        }
-      ]
-    },
-    {
-      "name": "Mock TG4",
-      "parts": [
-        {
-          "name": "Logical Reasoning",
-          "max": 25
-        },
-        {
-          "name": "Deviation Scanning",
-          "max": 30
-        },
-        {
-          "name": "Cube Assembly",
-          "max": 20
-        },
-        {
-          "name": "Series Number",
-          "max": 19
-        },
-        {
-          "name": "Shape Scanning",
-          "max": 52
-        },
-        {
-          "name": "Box Folding",
-          "max": 15
-        },
-        {
-          "name": "STM",
-          "max": 28
-        },
-        {
-          "name": "Interruption",
-          "max": 50
-        },
-        {
-          "name": "Number Skill",
-          "max": 40
-        },
-        {
-          "name": "Logic Gates",
-          "max": 20
-        },
-        {
-          "name": "Block Rotation",
-          "max": 25
-        },
-        {
-          "name": "Cube Turning",
-          "max": 18
-        },
-        {
-          "name": "Key Fitting",
-          "max": 10
-        },
-        {
-          "name": "Tracing",
-          "max": 29
-        }
-      ]
-    }
-  ],
-  "scores": [
-    {
-      "mockName": "Mock TG5",
-      "candidateName": "FH",
-      "scores": {
-        "Series pic": 22,
-        "Non-verbal Reasoning": 14,
-        "3D cube": 8,
-        "Perceptual speed": 40,
-        "Estimating": 32,
-        "Shape scanning": 40,
-        "Cube Folding": 18,
-        "Series Number": 29,
-        "Scanning/Comparing": 38,
-        "Pair of scales": 19,
-        "Interruption": 15,
-        "STM": 9
-      }
-    },
-    {
-      "mockName": "Mock TG5",
-      "candidateName": "เค้กนมสด",
-      "scores": {
-        "Series pic": 18,
-        "Non-verbal Reasoning": 13,
-        "3D cube": 7,
-        "Perceptual speed": 40,
-        "Estimating": 28,
-        "Shape scanning": 34,
-        "Cube Folding": 16,
-        "Series Number": 28,
-        "Scanning/Comparing": 36,
-        "Pair of scales": 11,
-        "Interruption": 12,
-        "STM": 11
-      }
-    },
-    {
-      "mockName": "Mock TG5",
-      "candidateName": "B",
-      "scores": {
-        "Series pic": 19,
-        "Non-verbal Reasoning": 13,
-        "3D cube": 7,
-        "Perceptual speed": 40,
-        "Estimating": 30,
-        "Shape scanning": 31,
-        "Cube Folding": 14,
-        "Series Number": 24,
-        "Scanning/Comparing": 35,
-        "Pair of scales": 6,
-        "Interruption": 12,
-        "STM": 8
-      }
-    },
-    {
-      "mockName": "Mock TG5",
-      "candidateName": "ATTOS",
-      "scores": {
-        "Series pic": 18,
-        "Non-verbal Reasoning": 15,
-        "3D cube": 6,
-        "Perceptual speed": 40,
-        "Estimating": 30,
-        "Shape scanning": 35,
-        "Cube Folding": 11,
-        "Series Number": 28,
-        "Scanning/Comparing": 36,
-        "Pair of scales": 12,
-        "Interruption": 12,
-        "STM": 8
-      }
-    },
-    {
-      "mockName": "Mock TG5",
-      "candidateName": "ST",
-      "scores": {
-        "Series pic": 18,
-        "Non-verbal Reasoning": 11,
-        "3D cube": 5,
-        "Perceptual speed": 40,
-        "Estimating": 33,
-        "Shape scanning": 32,
-        "Cube Folding": 11,
-        "Series Number": 32,
-        "Scanning/Comparing": 34,
-        "Pair of scales": 8,
-        "Interruption": 17,
-        "STM": 9
-      }
-    },
-    {
-      "mockName": "Mock TG1",
-      "candidateName": "Shabu",
-      "scores": {
-        "Series Picture": 20,
-        "2D Puzzle": 18,
-        "Deviation Scanning": 24,
-        "Series Number": 30,
-        "Block Folding": 28,
-        "STM Passage": 21,
-        "Hidden Image": 10,
-        "Aircraft Orientation": 19,
-        "Block Counting": 34,
-        "Key Fitting": 3,
-        "Oblique View": 28,
-        "Shape Scanning": 52,
-        "Approximation": 20
-      }
-    },
-    {
-      "mockName": "Mock TG1",
-      "candidateName": "ST",
-      "scores": {
-        "Series Picture": 19,
-        "2D Puzzle": 15,
-        "Deviation Scanning": 19,
-        "Series Number": 27,
-        "Block Folding": 29,
-        "STM Passage": 13,
-        "Hidden Image": 6,
-        "Aircraft Orientation": 19,
-        "Block Counting": 33,
-        "Key Fitting": 2,
-        "Oblique View": 23,
-        "Shape Scanning": 36,
-        "Approximation": 24
-      }
-    },
-    {
-      "mockName": "Mock TG1",
-      "candidateName": "Frame",
-      "scores": {
-        "Series Picture": 10,
-        "2D Puzzle": 18,
-        "Deviation Scanning": 14,
-        "Series Number": 11,
-        "Block Folding": 19,
-        "STM Passage": 11,
-        "Hidden Image": 4,
-        "Aircraft Orientation": 6,
-        "Block Counting": 21,
-        "Key Fitting": 3,
-        "Oblique View": 21,
-        "Shape Scanning": 31,
-        "Approximation": 19
-      }
-    },
-    {
-      "mockName": "Mock TG1",
-      "candidateName": "Chanol",
-      "scores": {
-        "Series Picture": 15,
-        "2D Puzzle": 15,
-        "Deviation Scanning": 19,
-        "Series Number": 26,
-        "Block Folding": 29,
-        "STM Passage": 15,
-        "Hidden Image": 12,
-        "Aircraft Orientation": 13,
-        "Block Counting": 24,
-        "Key Fitting": 3,
-        "Oblique View": 23,
-        "Shape Scanning": 41,
-        "Approximation": 24
-      }
-    },
-    {
-      "mockName": "Mock TG1",
-      "candidateName": "Holala",
-      "scores": {
-        "Series Picture": 19,
-        "2D Puzzle": 20,
-        "Deviation Scanning": 26,
-        "Series Number": 27,
-        "Block Folding": 28,
-        "STM Passage": 12,
-        "Hidden Image": 10,
-        "Aircraft Orientation": 19,
-        "Block Counting": 34,
-        "Key Fitting": 3,
-        "Oblique View": 28,
-        "Shape Scanning": 23,
-        "Approximation": 25
-      }
-    },
-    {
-      "mockName": "Mock TG1",
-      "candidateName": "Allstar",
-      "scores": {
-        "Series Picture": 17,
-        "2D Puzzle": 16,
-        "Deviation Scanning": 19,
-        "Series Number": 24,
-        "Block Folding": 29,
-        "STM Passage": 9,
-        "Hidden Image": 7,
-        "Aircraft Orientation": 10,
-        "Block Counting": 30,
-        "Key Fitting": 1,
-        "Oblique View": 22,
-        "Shape Scanning": 25,
-        "Approximation": 17
-      }
-    },
-    {
-      "mockName": "Mock TG2",
-      "candidateName": "FH",
-      "scores": {
-        "Abstract Reasoning": 11,
-        "Cube Assembly": 11,
-        "Series Number": 12,
-        "Deviation Scanning": 20,
-        "Box Folding": 32,
-        "STM Grid": 16,
-        "Interruption": 33,
-        "Block Rotation": 20,
-        "Number Scanning": 37,
-        "Oblique View": 15,
-        "Block Counting": 30,
-        "Numerical Estimation": 24,
-        "Spatial Apperception": 18,
-        "Key Fitting": 4
-      }
-    },
-    {
-      "mockName": "Mock TG2",
-      "candidateName": "Apo",
-      "scores": {
-        "Abstract Reasoning": 10,
-        "Cube Assembly": 8,
-        "Series Number": 13,
-        "Deviation Scanning": 15,
-        "Box Folding": 32,
-        "STM Grid": 16,
-        "Interruption": 29,
-        "Block Rotation": 25,
-        "Number Scanning": 31,
-        "Oblique View": 16,
-        "Block Counting": 29,
-        "Numerical Estimation": 22,
-        "Spatial Apperception": 34,
-        "Key Fitting": 4
-      }
-    },
-    {
-      "mockName": "Mock TG2",
-      "candidateName": "Shabu",
-      "scores": {
-        "Abstract Reasoning": 20,
-        "Cube Assembly": 17,
-        "Series Number": 12,
-        "Deviation Scanning": 25,
-        "Box Folding": 33,
-        "STM Grid": 25,
-        "Interruption": 43,
-        "Block Rotation": 25,
-        "Number Scanning": 33,
-        "Oblique View": 16,
-        "Block Counting": 30,
-        "Numerical Estimation": 19,
-        "Spatial Apperception": 34,
-        "Key Fitting": 5
-      }
-    },
-    {
-      "mockName": "Mock TG2",
-      "candidateName": "Holala",
-      "scores": {
-        "Abstract Reasoning": 16,
-        "Cube Assembly": 9,
-        "Series Number": 11,
-        "Deviation Scanning": 17,
-        "Box Folding": 33,
-        "STM Grid": 14,
-        "Interruption": 27,
-        "Block Rotation": 25,
-        "Number Scanning": 16,
-        "Oblique View": 16,
-        "Block Counting": 29,
-        "Numerical Estimation": 19,
-        "Spatial Apperception": 33,
-        "Key Fitting": 5
-      }
-    },
-    {
-      "mockName": "Mock TG2",
-      "candidateName": "Ball",
-      "scores": {
-        "Abstract Reasoning": 13,
-        "Cube Assembly": 10,
-        "Series Number": 11,
-        "Deviation Scanning": 20,
-        "Box Folding": 32,
-        "STM Grid": 15,
-        "Interruption": 24,
-        "Block Rotation": 21,
-        "Number Scanning": 24,
-        "Oblique View": 16,
-        "Block Counting": 28,
-        "Numerical Estimation": 19,
-        "Spatial Apperception": 33,
-        "Key Fitting": 6
-      }
-    },
-    {
-      "mockName": "Mock TG2",
-      "candidateName": "ST",
-      "scores": {
-        "Abstract Reasoning": 13,
-        "Cube Assembly": 13,
-        "Series Number": 13,
-        "Deviation Scanning": 19,
-        "Box Folding": 31,
-        "STM Grid": 6,
-        "Interruption": 31,
-        "Block Rotation": 23,
-        "Number Scanning": 21,
-        "Oblique View": 10,
-        "Block Counting": 30,
-        "Numerical Estimation": 30,
-        "Spatial Apperception": 24,
-        "Key Fitting": 4
-      }
-    },
-    {
-      "mockName": "Mock TG3",
-      "candidateName": "FH",
-      "scores": {
-        "Visual Logic": 31,
-        "2-D Puzzle": 19,
-        "Computer Checking": 27,
-        "Series Number": 19,
-        "Box Folding": 21,
-        "STM Passage": 19,
-        "Interruption": 30,
-        "Symbol & Condition": 18,
-        "Solid Figure Turning": 24,
-        "Aircraft Rotation": 30,
-        "Numerical Estimation": 29,
-        "Electrical Maze": 13,
-        "Systems": 120
-      }
-    },
-    {
-      "mockName": "Mock TG3",
-      "candidateName": "ST",
-      "scores": {
-        "Visual Logic": 30,
-        "2-D Puzzle": 14,
-        "Computer Checking": 30,
-        "Series Number": 20,
-        "Box Folding": 23,
-        "STM Passage": 7,
-        "Interruption": 30,
-        "Symbol & Condition": 31,
-        "Solid Figure Turning": 23,
-        "Aircraft Rotation": 26,
-        "Numerical Estimation": 32,
-        "Electrical Maze": 6,
-        "Systems": 73
-      }
-    },
-    {
-      "mockName": "Mock TG3",
-      "candidateName": "Holala",
-      "scores": {
-        "Visual Logic": 37,
-        "2-D Puzzle": 19,
-        "Computer Checking": 29,
-        "Series Number": 15,
-        "Box Folding": 18,
-        "STM Passage": 17,
-        "Interruption": 29,
-        "Symbol & Condition": 31,
-        "Solid Figure Turning": 26,
-        "Aircraft Rotation": 16,
-        "Numerical Estimation": 21,
-        "Electrical Maze": 10,
-        "Systems": 82
-      }
-    },
-    {
-      "mockName": "Mock TG3",
-      "candidateName": "Shabu",
-      "scores": {
-        "Visual Logic": 35,
-        "2-D Puzzle": 17,
-        "Computer Checking": 34,
-        "Series Number": 17,
-        "Box Folding": 29,
-        "STM Passage": 21,
-        "Interruption": 29,
-        "Symbol & Condition": 53,
-        "Solid Figure Turning": 25,
-        "Aircraft Rotation": 30,
-        "Numerical Estimation": 18,
-        "Electrical Maze": 7,
-        "Systems": 88
-      }
-    },
-    {
-      "mockName": "Mock TG3",
-      "candidateName": "AllStar",
-      "scores": {
-        "Visual Logic": 27,
-        "2-D Puzzle": 16,
-        "Computer Checking": 27,
-        "Series Number": 14,
-        "Box Folding": 23,
-        "STM Passage": 10,
-        "Interruption": 29,
-        "Symbol & Condition": 23,
-        "Solid Figure Turning": 26,
-        "Aircraft Rotation": 5,
-        "Numerical Estimation": 19,
-        "Electrical Maze": 6,
-        "Systems": 81
-      }
-    },
-    {
-      "mockName": "Mock TG3",
-      "candidateName": "B",
-      "scores": {
-        "Visual Logic": 32,
-        "2-D Puzzle": 11,
-        "Computer Checking": 20,
-        "Series Number": 15,
-        "Box Folding": 17,
-        "STM Passage": 16,
-        "Interruption": 27,
-        "Symbol & Condition": 23,
-        "Solid Figure Turning": 22,
-        "Aircraft Rotation": 17,
-        "Numerical Estimation": 24,
-        "Electrical Maze": 10,
-        "Systems": 88
-      }
-    },
-    {
-      "mockName": "Mock TG4",
-      "candidateName": "Chanol",
-      "scores": {
-        "Logical Reasoning": 23,
-        "Deviation Scanning": 22,
-        "Cube Assembly": 14,
-        "Series Number": 17,
-        "Shape Scanning": 34,
-        "Box Folding": 14,
-        "STM": 21,
-        "Interruption": 49,
-        "Number Skill": 36,
-        "Logic Gates": 14,
-        "Block Rotation": 24,
-        "Cube Turning": 9,
-        "Key Fitting": 5,
-        "Tracing": 21
-      }
-    },
-    {
-      "mockName": "Mock TG4",
-      "candidateName": "Apo",
-      "scores": {
-        "Logical Reasoning": 18,
-        "Deviation Scanning": 19,
-        "Cube Assembly": 14,
-        "Series Number": 12,
-        "Shape Scanning": 28,
-        "Box Folding": 15,
-        "STM": 11,
-        "Interruption": 50,
-        "Number Skill": 31,
-        "Logic Gates": 20,
-        "Block Rotation": 25,
-        "Cube Turning": 11,
-        "Key Fitting": 7,
-        "Tracing": 25
-      }
-    },
-    {
-      "mockName": "Mock TG4",
-      "candidateName": "ST",
-      "scores": {
-        "Logical Reasoning": 18,
-        "Deviation Scanning": 20,
-        "Cube Assembly": 18,
-        "Series Number": 16,
-        "Shape Scanning": 32,
-        "Box Folding": 14,
-        "STM": 9,
-        "Interruption": 49,
-        "Number Skill": 32,
-        "Logic Gates": 16,
-        "Block Rotation": 25,
-        "Cube Turning": 13,
-        "Key Fitting": 4,
-        "Tracing": 23
-      }
-    },
-    {
-      "mockName": "Mock TG4",
-      "candidateName": "Shabu",
-      "scores": {
-        "Logical Reasoning": 25,
-        "Deviation Scanning": 25,
-        "Cube Assembly": 18,
-        "Series Number": 14,
-        "Shape Scanning": 47,
-        "Box Folding": 15,
-        "STM": 26,
-        "Interruption": 40,
-        "Number Skill": 31,
-        "Logic Gates": 19,
-        "Block Rotation": 25,
-        "Cube Turning": 15,
-        "Key Fitting": 6,
-        "Tracing": 18
-      }
-    },
-    {
-      "mockName": "Mock TG4",
-      "candidateName": "B",
-      "scores": {
-        "Logical Reasoning": 12,
-        "Deviation Scanning": 20,
-        "Cube Assembly": 7,
-        "Series Number": 12,
-        "Shape Scanning": 23,
-        "Box Folding": 14,
-        "STM": 18,
-        "Interruption": 50,
-        "Number Skill": 27,
-        "Logic Gates": 19,
-        "Block Rotation": 16,
-        "Cube Turning": 6,
-        "Key Fitting": 5,
-        "Tracing": 24
-      }
-    },
-    {
-      "mockName": "Mock TG4",
-      "candidateName": "Holala",
-      "scores": {
-        "Logical Reasoning": 22,
-        "Deviation Scanning": 23,
-        "Cube Assembly": 14,
-        "Series Number": 13,
-        "Shape Scanning": 25,
-        "Box Folding": 14,
-        "STM": 16,
-        "Interruption": 49,
-        "Number Skill": 27,
-        "Logic Gates": 19,
-        "Block Rotation": 23,
-        "Cube Turning": 8,
-        "Key Fitting": 6,
-        "Tracing": 23
-      }
-    },
-    {
-      "mockName": "Mock TG4",
-      "candidateName": "FH",
-      "scores": {
-        "Logical Reasoning": 23,
-        "Deviation Scanning": 25,
-        "Cube Assembly": 17,
-        "Series Number": 14,
-        "Shape Scanning": 44,
-        "Box Folding": 14,
-        "STM": 17,
-        "Interruption": 50,
-        "Number Skill": 29,
-        "Logic Gates": 18,
-        "Block Rotation": 23,
-        "Cube Turning": 15,
-        "Key Fitting": 6,
-        "Tracing": 21
-      }
-    },
-    {
-      "mockName": "Mock TG4",
-      "candidateName": "ATTOS",
-      "scores": {
-        "Logical Reasoning": 17,
-        "Deviation Scanning": 22,
-        "Cube Assembly": 14,
-        "Series Number": 8,
-        "Shape Scanning": 33,
-        "Box Folding": 11,
-        "STM": 15,
-        "Interruption": 50,
-        "Number Skill": 29,
-        "Logic Gates": 20,
-        "Block Rotation": 23,
-        "Cube Turning": 16,
-        "Key Fitting": 5,
-        "Tracing": 20
-      }
-    }
-  ]
-};
-
-
 // Helper to determine if a mock supports Accuracy input and calculation
 function isAccuracyEnabled(mockName) {
   if (!mockName) return false;
@@ -932,7 +37,6 @@ let editingOriginalParts = [];
 // Chart.js Instances
 let barChartInstance = null;
 let radarChartInstance = null;
-let devChartInstance = null;
 
 
 // Recommendation tips map for sub-tests (Thai Language)
@@ -1160,116 +264,51 @@ function setButtonLoading(buttonId, isLoading, loadingText = "กำลังโ
 }
 
 // Data Fetching & Sync
-function normalizeDbNames() {
-  if (!db || !db.scores) return;
-  
-  const mergedScores = [];
-  const scoreMap = {};
-  
-  db.scores.forEach(s => {
-    if (!s.candidateName) return;
-    const normName = s.candidateName.trim().toUpperCase();
-    const key = s.mockName + "|||" + normName;
-    
-    if (scoreMap[key]) {
-      // Merge scores
-      scoreMap[key].scores = { ...scoreMap[key].scores, ...s.scores };
-    } else {
-      s.candidateName = normName;
-      scoreMap[key] = s;
-      mergedScores.push(s);
-    }
-  });
-  
-  db.scores = mergedScores;
-}
-
 async function loadData() {
-  const isInitialLoad = (db.mocks.length === 0);
+  setSyncStatus("loading", "กำลังดึงข้อมูล...");
   
-  // 1. Render Cache/Local Data Instantly (0-second perceived latency)
-  if (isInitialLoad) {
-    const cachedDb = localStorage.getItem("tg_mock_db_cache");
-    let parsedDb = null;
-    if (cachedDb) {
-      try {
-        parsedDb = JSON.parse(cachedDb);
-      } catch (e) {
-        parsedDb = null;
-      }
-    }
-    
-    if (parsedDb && parsedDb.mocks && parsedDb.mocks.length > 0) {
-      db = parsedDb;
-      normalizeDbNames();
-      setSyncStatus("offline", "โหมดออฟไลน์ (ใช้ข้อมูลในเครื่อง)");
-    } else {
-      db = JSON.parse(JSON.stringify(DEFAULT_DB));
-      normalizeDbNames();
-      localStorage.setItem("tg_mock_db_cache", JSON.stringify(db));
-      setSyncStatus("offline", "โหลดข้อมูลเริ่มต้นสำเร็จ (ข้อมูลในเครื่อง)");
-    }
-    initializeMockOptions();
-  }
-  
-  // 2. Background Sync with Google Sheets
   if (apiUrl) {
-    setSyncStatus("loading", "กำลังซิงค์ข้อมูลล่าสุด...");
-    
-    // Execute the fetch asynchronously in the background so it doesn't block the UI
-    (async () => {
-      try {
-        const response = await fetch(apiUrl);
-        if (!response.ok) throw new Error("HTTP error " + response.status);
-        const data = await response.json();
-        
-        // Compare with current database to see if we need to re-render
-        const dataStr = JSON.stringify(data);
-        const currentStr = JSON.stringify(db);
-        
-        if (dataStr !== currentStr) {
-          db = data;
-          normalizeDbNames();
-          localStorage.setItem("tg_mock_db_cache", JSON.stringify(db));
-          initializeMockOptions();
-          showToast("อัปเดตข้อมูลล่าสุดจาก Google Sheets เรียบร้อย", "success");
-        }
-        setSyncStatus("online", "ซิงค์กับ Google Sheet แล้ว");
-      } catch (error) {
-        console.error("Background sync failed:", error);
-        setSyncStatus("offline", "โหมดออฟไลน์ (ใช้ข้อมูลในเครื่อง)");
-        if (!isInitialLoad) {
-          showToast("ไม่สามารถซิงค์ข้อมูลล่าสุดได้ กำลังใช้ข้อมูลในเครื่อง", "warning");
-        }
-      }
-    })();
-  } else {
-    if (isInitialLoad) {
-      showToast("ยังไม่ได้ตั้งค่า API ซิงค์ข้อมูล", "warning");
+    try {
+      const response = await fetch(apiUrl);
+      if (!response.ok) throw new Error("HTTP error " + response.status);
+      const data = await response.json();
+      
+      db = data;
+      localStorage.setItem("tg_mock_db_cache", JSON.stringify(db));
+      setSyncStatus("online", "ซิงค์กับ Google Sheet แล้ว");
+      showToast("ดึงข้อมูลจาก Google Sheets สำเร็จ", "success");
+    } catch (error) {
+      console.error("Fetch from API failed, using cache:", error);
+      loadOfflineFallback("ไม่สามารถเชื่อมต่อ Google Sheets ได้ ใช้ข้อมูลสำรอง");
     }
+  } else {
+    loadOfflineFallback("ยังไม่ได้ตั้งค่า API ซิงค์ข้อมูล");
   }
+  
+  initializeMockOptions();
 }
 
 function loadOfflineFallback(warningMsg) {
   const cachedDb = localStorage.getItem("tg_mock_db_cache");
-  let parsedDb = null;
   if (cachedDb) {
-    try {
-      parsedDb = JSON.parse(cachedDb);
-    } catch (e) {
-      parsedDb = null;
-    }
-  }
-  
-  if (parsedDb && parsedDb.mocks && parsedDb.mocks.length > 0) {
-    db = parsedDb;
-    normalizeDbNames();
+    db = JSON.parse(cachedDb);
     setSyncStatus("offline", "โหมดออฟไลน์ (ใช้ข้อมูลในเครื่อง)");
   } else {
-    db = JSON.parse(JSON.stringify(DEFAULT_DB));
-    normalizeDbNames();
-    localStorage.setItem("tg_mock_db_cache", JSON.stringify(db));
-    setSyncStatus("offline", "โหลดข้อมูลเริ่มต้นสำเร็จ (ข้อมูลในเครื่อง)");
+    // If no cache, load default data.json asynchronously
+    fetch("data.json")
+      .then(res => res.json())
+      .then(data => {
+        db = data;
+        localStorage.setItem("tg_mock_db_cache", JSON.stringify(db));
+        setSyncStatus("offline", "โหลดข้อมูลเริ่มต้นสำเร็จ");
+        initializeMockOptions();
+      })
+      .catch(err => {
+        console.error("Loading data.json failed:", err);
+        setSyncStatus("error", "ไม่พบข้อมูล กรุณาสร้าง Mock ใหม่");
+        showToast("ไม่พบข้อมูลเดิม กรุณาสร้างการสอบใหม่ในระบบ", "error");
+      });
+    return;
   }
   showToast(warningMsg, "warning");
 }
@@ -1373,8 +412,6 @@ function onMockChanged() {
   renderHeatmap();
   renderIndividualReport();
   renderCharts();
-  renderDevSelector();
-  renderDevelopmentChart();
   
   // Dynamic Score Fields in Manage Tab
   generateScoreInputFields();
@@ -1659,62 +696,25 @@ function renderBarChart() {
 
 function renderRadarSelector() {
   const container = document.getElementById("radar-candidates-list");
-  if (!container) return;
-  
-  // Save check states if container already has checkboxes
-  const previousChecked = {};
-  const inputs = container.querySelectorAll("input[type='checkbox']");
-  let hasPrevious = false;
-  if (inputs.length > 0) {
-    hasPrevious = true;
-    inputs.forEach(input => {
-      if (input.id === "radar-select-all") return;
-      previousChecked[input.value] = input.checked;
-    });
-  }
-  
   container.innerHTML = "";
   
   const mockScores = db.scores.filter(s => s.mockName === selectedMockName);
   if (mockScores.length === 0) return;
   
-  // Sort mockScores alphabetically by candidateName
-  mockScores.sort((a, b) => a.candidateName.localeCompare(b.candidateName));
-  
-  // 1. Create "Select All" checkbox
-  let isAllChecked = true;
-  if (hasPrevious) {
-    const activeCands = mockScores.map(s => s.candidateName);
-    isAllChecked = activeCands.every(cand => previousChecked[cand] !== false);
-  }
-  
-  const selectAllDiv = document.createElement("div");
-  const selectAllActiveClass = isAllChecked ? "active" : "";
-  const selectAllCheckedAttr = isAllChecked ? "checked" : "";
-  
-  selectAllDiv.innerHTML = `
-    <label class="checkbox-label ${selectAllActiveClass}" id="lbl-check-all" style="border-style: dashed; font-weight: bold; border-color: var(--color-success-glow);">
-      <input type="checkbox" id="radar-select-all" ${selectAllCheckedAttr} onchange="toggleSelectAllRadar()">
-      <span class="color-dot" style="background-color: var(--color-success);"></span>
-      <span>เลือกทั้งหมด (Select All)</span>
-    </label>
-  `;
-  container.appendChild(selectAllDiv);
-  
-  // 2. Create individual candidate checkboxes
-  mockScores.forEach(s => {
-    const cand = s.candidateName;
-    const color = getCandidateColor(cand);
+  // We want to store selected check states, defaulting to show at least the selectedCandidate and average
+  mockScores.forEach((s, idx) => {
     const div = document.createElement("div");
-    const isChecked = previousChecked[cand] !== undefined ? previousChecked[cand] : isAllChecked;
-    const activeClass = isChecked ? "active" : "";
-    const checkedAttr = isChecked ? "checked" : "";
+    const activeClass = "active";
+    const isChecked = "checked";
+    
+    // Choose colors dynamically for candidates
+    const color = getCandidateColor(s.candidateName);
     
     div.innerHTML = `
-      <label class="checkbox-label ${activeClass}" id="lbl-check-${cand}">
-        <input type="checkbox" class="radar-cand-checkbox" value="${cand}" ${checkedAttr} onchange="updateRadarChartAndLabel('${cand}')">
+      <label class="checkbox-label ${activeClass}" id="lbl-check-${s.candidateName}">
+        <input type="checkbox" value="${s.candidateName}" ${isChecked} onchange="updateRadarChart()">
         <span class="color-dot" style="background-color: ${color};"></span>
-        <span>${cand}</span>
+        <span>${s.candidateName}</span>
       </label>
     `;
     container.appendChild(div);
@@ -1722,88 +722,36 @@ function renderRadarSelector() {
 }
 
 function getCandidateColor(name) {
-  const allCandidates = [...new Set(db.scores.map(s => s.candidateName))];
-  allCandidates.sort((a, b) => a.localeCompare(b));
-  const idx = allCandidates.indexOf(name);
+  const mockScores = db.scores.filter(s => s.mockName === selectedMockName);
+  mockScores.sort((a, b) => a.candidateName.localeCompare(b.candidateName));
+  const idx = mockScores.findIndex(s => s.candidateName === name);
   const colors = [
-    '#ff3366', // Coral Pink
-    '#2979ff', // Vivid Royal Blue
-    '#00e676', // Bright Spring Green
-    '#ff9100', // Deep Amber Orange
-    '#e040fb', // Vibrant Purple-Magenta
-    '#00ffff', // Bright Cyan
-    '#ffea00', // Vibrant Lemon Yellow
-    '#ff1744', // Vivid Crimson Red
-    '#1de9b6', // Neon Turquoise
-    '#b366ff', // Lavender Purple
-    '#99ff33', // Volt Lime
-    '#33ccff', // Light Sky Blue
-    '#ff6633', // Neon Salmon Orange
-    '#00ffcc', // Electric Teal
-    '#ff99e6', // Light Pink
-    '#76ff03', // Vibrant Grass Green
-    '#d500f9', // Deep Magenta
-    '#00b0ff', // Vivid Cyan
-    '#ff5050', // Soft Red
-    '#33ff77'  // Bright Mint Green
+    '#f43f5e', // Vivid Rose / Pink
+    '#06b6d4', // Neon Cyan / Light Blue
+    '#f59e0b', // Bright Amber / Yellow-Gold
+    '#10b981', // Emerald Green
+    '#a855f7', // Electric Violet / Purple
+    '#f97316', // Bright Orange
+    '#3b82f6', // Bright Royal Blue
+    '#ef4444', // Crimson Red
+    '#00ffcc', // Vibrant Teal / Turquoise
+    '#eab308'  // Pure Yellow
   ];
   if (idx === -1) return '#ffffff';
   return colors[idx % colors.length];
 }
 
-function toggleSelectAllRadar() {
-  const selectAllChk = document.getElementById("radar-select-all");
-  const selectAllLbl = document.getElementById("lbl-check-all");
-  if (!selectAllChk || !selectAllLbl) return;
-  
-  const checked = selectAllChk.checked;
-  if (checked) {
-    selectAllLbl.classList.add("active");
-  } else {
-    selectAllLbl.classList.remove("active");
-  }
-  
-  const checkboxes = document.querySelectorAll("#radar-candidates-list .radar-cand-checkbox");
+function updateRadarChart() {
+  // Sync label active class style
+  const checkboxes = document.querySelectorAll("#radar-candidates-list input[type='checkbox']");
   checkboxes.forEach(cb => {
-    cb.checked = checked;
     const lbl = document.getElementById(`lbl-check-${cb.value}`);
-    if (lbl) {
-      if (checked) {
-        lbl.classList.add("active");
-      } else {
-        lbl.classList.remove("active");
-      }
-    }
-  });
-  
-  renderRadarChart();
-}
-
-function updateRadarChartAndLabel(candName) {
-  const lbl = document.getElementById(`lbl-check-${candName}`);
-  if (lbl) {
-    const chk = lbl.querySelector('input[type="checkbox"]');
-    if (chk.checked) {
+    if (cb.checked) {
       lbl.classList.add("active");
     } else {
       lbl.classList.remove("active");
     }
-  }
-  
-  // Sync the Select All checkbox state
-  const selectAllChk = document.getElementById("radar-select-all");
-  const selectAllLbl = document.getElementById("lbl-check-all");
-  if (selectAllChk && selectAllLbl) {
-    const totalCands = document.querySelectorAll("#radar-candidates-list .radar-cand-checkbox").length;
-    const checkedCands = document.querySelectorAll("#radar-candidates-list .radar-cand-checkbox:checked").length;
-    
-    selectAllChk.checked = (totalCands === checkedCands);
-    if (selectAllChk.checked) {
-      selectAllLbl.classList.add("active");
-    } else {
-      selectAllLbl.classList.remove("active");
-    }
-  }
+  });
   
   renderRadarChart();
 }
@@ -1816,7 +764,7 @@ function renderRadarChart() {
   
   // Find which candidates are checked
   const checkedCandidates = [];
-  const checkboxes = document.querySelectorAll("#radar-candidates-list .radar-cand-checkbox");
+  const checkboxes = document.querySelectorAll("#radar-candidates-list input[type='checkbox']");
   checkboxes.forEach(cb => {
     if (cb.checked) checkedCandidates.push(cb.value);
   });
@@ -1937,377 +885,6 @@ function renderRadarChart() {
   });
 }
 
-const rankLabelsPlugin = {
-  id: 'rankLabels',
-  afterDatasetsDraw(chart, args, options) {
-    const { ctx } = chart;
-    ctx.save();
-    ctx.font = 'bold 10px Inter, Roboto, sans-serif';
-    const isDark = !document.body.classList.contains("light-theme");
-    ctx.fillStyle = isDark ? "#ffffff" : "#1e293b";
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'bottom';
-    
-    chart.data.datasets.forEach((dataset, datasetIndex) => {
-      const meta = chart.getDatasetMeta(datasetIndex);
-      if (meta.hidden) return;
-      
-      meta.data.forEach((element, index) => {
-        const rank = dataset.ranks && dataset.ranks[index];
-        if (rank !== undefined && rank !== null) {
-          const x = element.x;
-          const y = element.y;
-          ctx.fillText(`#${rank}`, x, y - 8);
-        }
-      });
-    });
-    ctx.restore();
-  }
-};
-
-function calculateAllMocksStats() {
-  const stats = {};
-  db.mocks.forEach(mock => {
-    const mockScores = db.scores.filter(s => s.mockName === mock.name);
-    const processed = mockScores.map(cs => {
-      const data = getMockDataForCandidate(mock, cs);
-      return {
-        candidateName: cs.candidateName,
-        rawTotal: data.rawTotal,
-        rawMax: data.rawMax,
-        percentage: rankingType === "raw" ? data.rawPercentage : data.weightedPercentage,
-        weightedTotal: data.weightedTotal
-      };
-    });
-    
-    if (rankingType === "raw") {
-      processed.sort((a, b) => b.rawTotal - a.rawTotal || b.percentage - a.percentage);
-    } else {
-      processed.sort((a, b) => b.weightedTotal - a.weightedTotal || b.percentage - a.percentage);
-    }
-    
-    stats[mock.name] = {};
-    processed.forEach((item, index) => {
-      stats[mock.name][item.candidateName] = {
-        rank: index + 1,
-        totalCount: processed.length,
-        percentage: item.percentage,
-        rawTotal: item.rawTotal,
-        rawMax: item.rawMax
-      };
-    });
-  });
-  return stats;
-}
-
-function renderDevSelector() {
-  const container = document.getElementById("dev-candidates-list");
-  if (!container) return;
-  
-  // Save check states if container already has checkboxes
-  const previousChecked = {};
-  const inputs = container.querySelectorAll("input[type='checkbox']");
-  let hasPrevious = false;
-  if (inputs.length > 0) {
-    hasPrevious = true;
-    inputs.forEach(input => {
-      if (input.id === "dev-select-all") return;
-      previousChecked[input.value] = input.checked;
-    });
-  }
-  
-  container.innerHTML = "";
-  const allCandidates = [...new Set(db.scores.map(s => s.candidateName))];
-  allCandidates.sort((a, b) => a.localeCompare(b));
-  
-  if (allCandidates.length === 0) return;
-  
-  // 1. Create "Select All" checkbox
-  let isAllChecked = true;
-  if (hasPrevious) {
-    isAllChecked = allCandidates.every(cand => previousChecked[cand] !== false);
-  }
-  
-  const selectAllDiv = document.createElement("div");
-  const selectAllActiveClass = isAllChecked ? "active" : "";
-  const selectAllCheckedAttr = isAllChecked ? "checked" : "";
-  
-  selectAllDiv.innerHTML = `
-    <label class="checkbox-label ${selectAllActiveClass}" id="lbl-check-dev-all" style="border-style: dashed; font-weight: bold; border-color: var(--color-primary-glow);">
-      <input type="checkbox" id="dev-select-all" ${selectAllCheckedAttr} onchange="toggleSelectAllDev()">
-      <span class="color-dot" style="background-color: var(--color-primary);"></span>
-      <span>เลือกทั้งหมด (Select All)</span>
-    </label>
-  `;
-  container.appendChild(selectAllDiv);
-  
-  // 2. Create individual candidate checkboxes
-  allCandidates.forEach(cand => {
-    const color = getCandidateColor(cand);
-    const div = document.createElement("div");
-    const isChecked = previousChecked[cand] !== undefined ? previousChecked[cand] : isAllChecked;
-    const activeClass = isChecked ? "active" : "";
-    const checkedAttr = isChecked ? "checked" : "";
-    
-    div.innerHTML = `
-      <label class="checkbox-label ${activeClass}" id="lbl-check-dev-${cand}">
-        <input type="checkbox" class="dev-cand-checkbox" value="${cand}" ${checkedAttr} onchange="updateDevChartAndLabel('${cand}')">
-        <span class="color-dot" style="background-color: ${color};"></span>
-        <span>${cand}</span>
-      </label>
-    `;
-    container.appendChild(div);
-  });
-}
-
-function toggleSelectAllDev() {
-  const selectAllChk = document.getElementById("dev-select-all");
-  const selectAllLbl = document.getElementById("lbl-check-dev-all");
-  if (!selectAllChk || !selectAllLbl) return;
-  
-  const checked = selectAllChk.checked;
-  if (checked) {
-    selectAllLbl.classList.add("active");
-  } else {
-    selectAllLbl.classList.remove("active");
-  }
-  
-  const checkboxes = document.querySelectorAll("#dev-candidates-list .dev-cand-checkbox");
-  checkboxes.forEach(cb => {
-    cb.checked = checked;
-    const lbl = document.getElementById(`lbl-check-dev-${cb.value}`);
-    if (lbl) {
-      if (checked) {
-        lbl.classList.add("active");
-      } else {
-        lbl.classList.remove("active");
-      }
-    }
-  });
-  
-  updateDevChart();
-}
-
-function updateDevChartAndLabel(candName) {
-  const lbl = document.getElementById(`lbl-check-dev-${candName}`);
-  if (lbl) {
-    const chk = lbl.querySelector('input[type="checkbox"]');
-    if (chk.checked) {
-      lbl.classList.add("active");
-    } else {
-      lbl.classList.remove("active");
-    }
-  }
-  
-  // Sync "Select All" checkbox state
-  const selectAllChk = document.getElementById("dev-select-all");
-  const selectAllLbl = document.getElementById("lbl-check-dev-all");
-  if (selectAllChk && selectAllLbl) {
-    const totalCands = document.querySelectorAll("#dev-candidates-list .dev-cand-checkbox").length;
-    const checkedCands = document.querySelectorAll("#dev-candidates-list .dev-cand-checkbox:checked").length;
-    
-    selectAllChk.checked = (totalCands === checkedCands);
-    if (selectAllChk.checked) {
-      selectAllLbl.classList.add("active");
-    } else {
-      selectAllLbl.classList.remove("active");
-    }
-  }
-  
-  updateDevChart();
-}
-
-function updateDevChart() {
-  renderDevelopmentChart();
-}
-
-function renderDevelopmentChart() {
-  const ctx = document.getElementById("devChart");
-  if (!ctx) return;
-  
-  // Sort mocks chronologically / numerically
-  const sortedMocks = [...db.mocks].sort((a, b) => {
-    return a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' });
-  });
-  
-  if (sortedMocks.length === 0) {
-    if (devChartInstance) {
-      devChartInstance.destroy();
-      devChartInstance = null;
-    }
-    return;
-  }
-  
-  const checkedBoxes = document.querySelectorAll("#dev-candidates-list input[type='checkbox']:checked");
-  const selectedCandidates = Array.from(checkedBoxes).map(cb => cb.value);
-  const stats = calculateAllMocksStats();
-  const labels = sortedMocks.map(m => m.name);
-  const datasets = [];
-  
-  selectedCandidates.forEach(cand => {
-    const color = getCandidateColor(cand);
-    const dataPoints = [];
-    const ranks = [];
-    const totalCounts = [];
-    
-    sortedMocks.forEach(mock => {
-      const mockStats = stats[mock.name] && stats[mock.name][cand];
-      if (mockStats) {
-        dataPoints.push(parseFloat(mockStats.percentage.toFixed(1)));
-        ranks.push(mockStats.rank);
-        totalCounts.push(mockStats.totalCount);
-      } else {
-        dataPoints.push(null);
-        ranks.push(null);
-        totalCounts.push(null);
-      }
-    });
-    
-    datasets.push({
-      label: cand,
-      data: dataPoints,
-      ranks: ranks,
-      totalCounts: totalCounts,
-      borderColor: color,
-      backgroundColor: color + "1a", // 10% opacity
-      borderWidth: 3,
-      pointBackgroundColor: color,
-      pointBorderColor: "#ffffff",
-      pointBorderWidth: 1.5,
-      pointRadius: 6,
-      pointHoverRadius: 8,
-      tension: 0.15,
-      spanGaps: true
-    });
-  });
-  
-  // Calculate group mean dataset
-  const meanDataPoints = [];
-  const meanRanks = [];
-  const meanTotalCounts = [];
-  
-  sortedMocks.forEach(mock => {
-    const mockStatsObj = stats[mock.name];
-    let sum = 0;
-    let count = 0;
-    if (mockStatsObj) {
-      for (const candName in mockStatsObj) {
-        sum += mockStatsObj[candName].percentage;
-        count++;
-      }
-    }
-    const mean = count > 0 ? parseFloat((sum / count).toFixed(1)) : null;
-    meanDataPoints.push(mean);
-    meanRanks.push(null);
-    meanTotalCounts.push(null);
-  });
-  
-  const isDark = !document.body.classList.contains("light-theme");
-  const meanColor = isDark ? "rgba(255, 255, 255, 0.85)" : "rgba(31, 41, 55, 0.85)"; // White in dark theme, dark gray/black in light theme
-  
-  // Push group mean line if there is any mock data
-  datasets.push({
-    label: 'ค่าเฉลี่ยกลุ่ม (Mean)',
-    data: meanDataPoints,
-    ranks: meanRanks,
-    totalCounts: meanTotalCounts,
-    borderColor: meanColor,
-    backgroundColor: 'transparent',
-    borderWidth: 2.5,
-    borderDash: [6, 4],
-    pointBackgroundColor: meanColor,
-    pointBorderColor: "#ffffff",
-    pointBorderWidth: 1,
-    pointRadius: 4,
-    pointHoverRadius: 6,
-    tension: 0.15,
-    spanGaps: true
-  });
-  
-  // Calculate dynamic minimum score for Y-axis to highlight the gap
-  let minScore = 100;
-  selectedCandidates.forEach(cand => {
-    sortedMocks.forEach(mock => {
-      const mockStats = stats[mock.name] && stats[mock.name][cand];
-      if (mockStats) {
-        if (mockStats.percentage < minScore) {
-          minScore = mockStats.percentage;
-        }
-      }
-    });
-  });
-  
-  // Factor in Mean line scores
-  meanDataPoints.forEach(val => {
-    if (val !== null && val < minScore) {
-      minScore = val;
-    }
-  });
-  
-  const yMin = (selectedCandidates.length > 0 || meanDataPoints.some(v => v !== null)) && minScore < 100 
-    ? Math.max(0, Math.floor((minScore - 5) / 5) * 5) 
-    : 0;
-  
-  const textColor = isDark ? "#9ca3af" : "#4b5563";
-  const gridColor = isDark ? "rgba(255, 255, 255, 0.06)" : "rgba(0, 0, 0, 0.06)";
-  
-  if (devChartInstance) {
-    devChartInstance.destroy();
-  }
-  
-  devChartInstance = new Chart(ctx.getContext("2d"), {
-    type: 'line',
-    data: {
-      labels: labels,
-      datasets: datasets
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      scales: {
-        y: {
-          min: yMin,
-          max: 100,
-          grid: { color: gridColor },
-          ticks: {
-            color: textColor,
-            callback: value => `${value}%`
-          }
-        },
-        x: {
-          grid: { color: gridColor },
-          ticks: { color: textColor }
-        }
-      },
-      plugins: {
-        legend: {
-          position: 'bottom',
-          labels: {
-            color: textColor,
-            font: { family: 'Inter, Roboto, sans-serif' }
-          }
-        },
-        tooltip: {
-          callbacks: {
-            label: function(context) {
-              const label = context.dataset.label;
-              const percentage = context.parsed.y;
-              const idx = context.dataIndex;
-              const rank = context.dataset.ranks[idx];
-              const totalCount = context.dataset.totalCounts[idx];
-              if (rank) {
-                return `${label}: ${percentage.toFixed(1)}% (อันดับที่ ${rank} / ${totalCount})`;
-              }
-              return `${label}: ${percentage.toFixed(1)}%`;
-            }
-          }
-        }
-      }
-    },
-    plugins: [rankLabelsPlugin]
-  });
-}
-
 function varStyle(varName) {
   return getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
 }
@@ -2366,27 +943,10 @@ function renderHeatmap() {
     return;
   }
   
-  // Sort candidates by Rank (rank 1 to last)
-  const processedMockScores = mockScores.map(s => {
-    const data = getMockDataForCandidate(currentMock, s);
-    return {
-      scoreObj: s,
-      rawTotal: data.rawTotal,
-      rawPercentage: data.rawPercentage,
-      weightedTotal: data.weightedTotal,
-      weightedPercentage: data.weightedPercentage
-    };
-  });
+  // Sort candidates by name
+  mockScores.sort((a, b) => a.candidateName.localeCompare(b.candidateName));
   
-  if (rankingType === "raw") {
-    processedMockScores.sort((a, b) => b.rawTotal - a.rawTotal || b.rawPercentage - a.rawPercentage);
-  } else {
-    processedMockScores.sort((a, b) => b.weightedTotal - a.weightedTotal || b.weightedPercentage - a.weightedPercentage);
-  }
-  
-  const sortedMockScores = processedMockScores.map(x => x.scoreObj);
-  
-  sortedMockScores.forEach(s => {
+  mockScores.forEach(s => {
     const tr = document.createElement("tr");
     tr.innerHTML = `<td class="name-cell" onclick="selectCandidate('${s.candidateName}')">${s.candidateName}</td>`;
     
@@ -2692,7 +1252,7 @@ function generateScoreInputFields() {
 
 function fillCandidateScoresToForm() {
   const selectMock = document.getElementById("score-mock-select").value;
-  const candidateName = document.getElementById("score-candidate-input").value.trim().toUpperCase();
+  const candidateName = document.getElementById("score-candidate-input").value.trim();
   const deleteBtn = document.getElementById("btn-delete-score");
   
   if (!selectMock || !candidateName) {
@@ -3005,7 +1565,7 @@ async function submitScore(event) {
   event.preventDefault();
   
   const mockName = document.getElementById("score-mock-select").value;
-  const candidateName = document.getElementById("score-candidate-input").value.trim().toUpperCase();
+  const candidateName = document.getElementById("score-candidate-input").value.trim();
   
   if (!mockName || !candidateName) {
     showToast("กรุณาระบุชื่อการสอบและชื่อผู้สอบ", "error");
@@ -3121,16 +1681,15 @@ let deleteCandidateRef = "";
 let deleteMockRef = "";
 
 function confirmDeleteScore(candidateName, mockName) {
-  const normName = candidateName.trim().toUpperCase();
-  deleteCandidateRef = normName;
+  deleteCandidateRef = candidateName;
   deleteMockRef = mockName || selectedMockName;
-  document.getElementById("delete-candidate-name-span").textContent = `${normName} (${deleteMockRef})`;
+  document.getElementById("delete-candidate-name-span").textContent = `${candidateName} (${deleteMockRef})`;
   document.getElementById("delete-modal").classList.add("active");
 }
 
 function deleteScoreFromForm() {
   const selectMock = document.getElementById("score-mock-select").value;
-  const candidateName = document.getElementById("score-candidate-input").value.trim().toUpperCase();
+  const candidateName = document.getElementById("score-candidate-input").value.trim();
   if (selectMock && candidateName) {
     confirmDeleteScore(candidateName, selectMock);
   }
@@ -3179,7 +1738,7 @@ async function executeDeleteScore() {
   }
   
   // Clear form if the deleted score matches the currently inputted candidate in form
-  const currentFormCandidate = document.getElementById("score-candidate-input").value.trim().toUpperCase();
+  const currentFormCandidate = document.getElementById("score-candidate-input").value.trim();
   const currentFormMock = document.getElementById("score-mock-select").value;
   if (currentFormCandidate === deleteCandidateRef && currentFormMock === deleteMockRef) {
     document.getElementById("score-candidate-input").value = "";
@@ -3331,7 +1890,6 @@ function setupEventListeners() {
       calculateAndRenderLeaderboard();
       renderIndividualReport();
       renderCharts();
-      renderDevelopmentChart();
     });
   });
   
@@ -3390,12 +1948,6 @@ function switchTab(tabId) {
   }
   if (tabId === "leaderboard") {
     setTimeout(renderBarChart, 50);
-  }
-  if (tabId === "development") {
-    setTimeout(() => {
-      renderDevSelector();
-      renderDevelopmentChart();
-    }, 50);
   }
 }
 
