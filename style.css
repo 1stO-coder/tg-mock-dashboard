@@ -1091,8 +1091,16 @@ header {
 
 /* Mobile Screen Responsive Adjustments */
 @media (max-width: 600px) {
+  html,
+  body {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
   .app-container {
     padding: 1rem 0.75rem;
+    width: 100%;
+    max-width: 100%;
   }
 
   header {
@@ -1104,16 +1112,32 @@ header {
 
   .brand-logo {
     font-size: 1.6rem;
+    line-height: 1.15;
+    flex-wrap: wrap;
   }
 
   .controls-section {
     width: 100%;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 40px 40px;
     gap: 0.5rem;
   }
 
   .select-wrapper, .select-control {
     width: 100%;
+    min-width: 0;
+  }
+
+  #sync-status-badge {
+    grid-column: 1 / -1;
+    max-width: 100%;
+  }
+
+  #sync-status-badge span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .grid-summary {
@@ -1124,25 +1148,43 @@ header {
 
   .glass-card {
     padding: 1rem;
+    min-width: 0;
   }
 
   .card-value {
     font-size: 1.35rem;
+    min-width: 0;
+    overflow-wrap: anywhere;
   }
 
   .tabs-navigation {
+    max-width: 100%;
     padding-bottom: 0.3rem;
     margin-bottom: 1rem;
-    scrollbar-width: none; /* Hide scrollbar Firefox */
-  }
-
-  .tabs-navigation::-webkit-scrollbar {
-    display: none; /* Hide Webkit scrollbar */
+    scroll-snap-type: x proximity;
+    scrollbar-width: thin;
   }
 
   .tab-btn {
+    flex: 0 0 auto;
     padding: 0.5rem 0.8rem;
     font-size: 0.85rem;
+    scroll-snap-align: start;
+  }
+
+  .leaderboard-section,
+  .radar-layout,
+  .candidate-insights-grid,
+  .manage-grid,
+  .tab-content {
+    min-width: 0;
+  }
+
+  .leaderboard-section > .glass-card,
+  .radar-layout > .glass-card,
+  .candidate-insights-grid .glass-card,
+  .manage-grid > .glass-card {
+    min-width: 0;
   }
 
   .table-header-bar {
@@ -1153,16 +1195,56 @@ header {
 
   .view-toggle {
     width: 100%;
+    min-width: 0;
+    overflow: hidden;
   }
 
   .toggle-opt {
     flex: 1;
+    min-width: 0;
+    padding: 0.45rem 0.45rem;
     text-align: center;
+    white-space: normal;
+    line-height: 1.25;
+  }
+
+  .table-responsive {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .score-table {
+    min-width: 0;
   }
 
   .score-table th, .score-table td {
-    padding: 0.6rem 0.8rem;
-    font-size: 0.85rem;
+    padding: 0.55rem 0.55rem;
+    font-size: 0.8rem;
+    line-height: 1.3;
+  }
+
+  .score-table .progress-bar-cell {
+    display: none;
+  }
+
+  .rank-cell {
+    width: 44px;
+  }
+
+  .rank-badge {
+    width: 26px;
+    height: 26px;
+  }
+
+  .score-cell {
+    font-size: 0.88rem;
+  }
+
+  .name-cell {
+    max-width: 88px;
+    overflow-wrap: anywhere;
   }
 
   .chart-container {
@@ -1173,14 +1255,29 @@ header {
     gap: 1rem;
   }
 
+  .radar-selector {
+    max-height: 280px;
+    padding-right: 0;
+  }
+
   .checkbox-label {
     padding: 0.5rem 0.8rem;
     font-size: 0.85rem;
+    min-width: 0;
+  }
+
+  .checkbox-label span:last-child {
+    min-width: 0;
+    overflow-wrap: anywhere;
   }
 
   .candidate-insights-grid {
     grid-template-columns: 1fr !important;
     gap: 1rem;
+  }
+
+  .insights-dual-grid {
+    grid-template-columns: 1fr;
   }
 
   .avatar-icon {
@@ -1196,5 +1293,8 @@ header {
   .manage-grid {
     gap: 1.5rem;
   }
-}
 
+  .dynamic-row {
+    grid-template-columns: minmax(0, 1fr) 88px 40px;
+  }
+}

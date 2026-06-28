@@ -3382,6 +3382,11 @@ function switchTab(tabId) {
       c.classList.remove("active");
     }
   });
+
+  const activeTabButton = document.querySelector(`.tabs-navigation .tab-btn[data-tab="${tabId}"]`);
+  if (activeTabButton && window.matchMedia("(max-width: 600px)").matches) {
+    activeTabButton.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+  }
   
   // Specific tab load adjustments
   if (tabId === "radar") {
