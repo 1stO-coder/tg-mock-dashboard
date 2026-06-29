@@ -1247,6 +1247,42 @@ header {
     overflow-wrap: anywhere;
   }
 
+  #heatmap-table th:first-child,
+  #heatmap-table td:first-child {
+    width: 78px;
+    min-width: 78px;
+    max-width: 78px;
+    white-space: normal;
+    word-break: normal;
+    overflow-wrap: anywhere;
+    line-height: 1.2;
+    text-align: left;
+  }
+
+  #ind-score-breakdown-card .score-table {
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+
+  #ind-score-breakdown-card th:first-child,
+  #ind-score-breakdown-card td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 10;
+    width: 112px;
+    min-width: 112px;
+    max-width: 112px;
+    background-color: var(--bg-deep) !important;
+    border-right: 1px solid var(--border-light);
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.15);
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  #ind-score-breakdown-card th:first-child {
+    z-index: 11;
+  }
+
   .chart-container {
     min-height: 280px !important;
   }

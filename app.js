@@ -1414,6 +1414,42 @@ function getMockDataForCandidate(mock, candidateScore) {
   };
 }
 
+function getAccuracyDataForCandidate(mock, candidateScore) {
+  let totalCorrect = 0;
+  let totalAttempted = 0;
+  
+  mock.parts.forEach(part => {
+    const correct = candidateScore.scores[part.name] || 0;
+    const attempted = candidateScore.scores[part.name + "_attempted"];
+    if (attempted !== undefined && attempted !== null) {
+      totalCorrect += correct;
+      totalAttempted += attempted;
+    }
+  });
+  
+  return {
+    accuracy: totalAttempted > 0 ? (totalCorrect / totalAttempted) * 100 : 0,
+    hasAccuracyData: totalAttempted > 0
+  };
+}
+
+function compareRankedScores(a, b, type = rankingType) {
+  const primaryA = type === "raw" ? a.rawTotal : a.weightedTotal;
+  const primaryB = type === "raw" ? b.rawTotal : b.weightedTotal;
+  const primaryDiff = primaryB - primaryA;
+  if (Math.abs(primaryDiff) > 0.000001) return primaryDiff;
+  
+  const accuracyDiff = (b.accuracy || 0) - (a.accuracy || 0);
+  if (Math.abs(accuracyDiff) > 0.000001) return accuracyDiff;
+  
+  const pctA = type === "raw" ? a.rawPercentage : a.weightedPercentage;
+  const pctB = type === "raw" ? b.rawPercentage : b.weightedPercentage;
+  const pctDiff = (pctB || 0) - (pctA || 0);
+  if (Math.abs(pctDiff) > 0.000001) return pctDiff;
+  
+  return (a.candidateName || a.name || "").localeCompare(b.candidateName || b.name || "");
+}
+
 function calculateAndRenderLeaderboard() {
   const currentMock = db.mocks.find(m => m.name === selectedMockName);
   if (!currentMock) return;
@@ -1450,34 +1486,16 @@ function calculateAndRenderLeaderboard() {
   
   const processedScores = mockScores.map(candScore => {
     const stats = getMockDataForCandidate(currentMock, candScore);
-    
-    // Calculate overall accuracy
-    let totalCorrect = 0;
-    let totalAttempted = 0;
-    currentMock.parts.forEach(part => {
-      const correct = candScore.scores[part.name] || 0;
-      const attempted = candScore.scores[part.name + "_attempted"];
-      if (attempted !== undefined && attempted !== null) {
-        totalCorrect += correct;
-        totalAttempted += attempted;
-      }
-    });
-    const accuracy = totalAttempted > 0 ? (totalCorrect / totalAttempted) * 100 : 0;
+    const accuracyData = getAccuracyDataForCandidate(currentMock, candScore);
     
     return {
       candidateName: candScore.candidateName,
       ...stats,
-      accuracy,
-      hasAccuracyData: totalAttempted > 0
+      ...accuracyData
     };
   });
   
-  // Sort
-  if (rankingType === "raw") {
-    processedScores.sort((a, b) => b.rawTotal - a.rawTotal || b.rawPercentage - a.rawPercentage);
-  } else {
-    processedScores.sort((a, b) => b.weightedTotal - a.weightedTotal || b.weightedPercentage - a.weightedPercentage);
-  }
+  processedScores.sort((a, b) => compareRankedScores(a, b));
   
   // Calculate summary widgets
   renderSummaryWidgets(processedScores, currentMock);
@@ -1584,15 +1602,18 @@ function renderBarChart() {
   const mockScores = db.scores.filter(s => s.mockName === selectedMockName);
   const processedScores = mockScores.map(candScore => {
     const stats = getMockDataForCandidate(currentMock, candScore);
+    const accuracyData = getAccuracyDataForCandidate(currentMock, candScore);
     return {
       name: candScore.candidateName,
+      candidateName: candScore.candidateName,
       val: rankingType === "raw" ? stats.rawPercentage : stats.weightedPercentage,
-      displayVal: rankingType === "raw" ? stats.rawTotal : stats.weightedTotal
+      displayVal: rankingType === "raw" ? stats.rawTotal : stats.weightedTotal,
+      ...stats,
+      ...accuracyData
     };
   });
   
-  // Sort by score
-  processedScores.sort((a, b) => b.val - a.val);
+  processedScores.sort((a, b) => compareRankedScores(a, b));
   
   const labels = processedScores.map(row => row.name);
   const dataVals = processedScores.map(row => row.val);
@@ -1971,20 +1992,16 @@ function calculateAllMocksStats() {
     const mockScores = db.scores.filter(s => s.mockName === mock.name);
     const processed = mockScores.map(cs => {
       const data = getMockDataForCandidate(mock, cs);
+      const accuracyData = getAccuracyDataForCandidate(mock, cs);
       return {
         candidateName: cs.candidateName,
-        rawTotal: data.rawTotal,
-        rawMax: data.rawMax,
         percentage: rankingType === "raw" ? data.rawPercentage : data.weightedPercentage,
-        weightedTotal: data.weightedTotal
+        ...data,
+        ...accuracyData
       };
     });
     
-    if (rankingType === "raw") {
-      processed.sort((a, b) => b.rawTotal - a.rawTotal || b.percentage - a.percentage);
-    } else {
-      processed.sort((a, b) => b.weightedTotal - a.weightedTotal || b.percentage - a.percentage);
-    }
+    processed.sort((a, b) => compareRankedScores(a, b));
     
     stats[mock.name] = {};
     processed.forEach((item, index) => {
@@ -2369,20 +2386,16 @@ function renderHeatmap() {
   // Sort candidates by Rank (rank 1 to last)
   const processedMockScores = mockScores.map(s => {
     const data = getMockDataForCandidate(currentMock, s);
+    const accuracyData = getAccuracyDataForCandidate(currentMock, s);
     return {
       scoreObj: s,
-      rawTotal: data.rawTotal,
-      rawPercentage: data.rawPercentage,
-      weightedTotal: data.weightedTotal,
-      weightedPercentage: data.weightedPercentage
+      candidateName: s.candidateName,
+      ...data,
+      ...accuracyData
     };
   });
   
-  if (rankingType === "raw") {
-    processedMockScores.sort((a, b) => b.rawTotal - a.rawTotal || b.rawPercentage - a.rawPercentage);
-  } else {
-    processedMockScores.sort((a, b) => b.weightedTotal - a.weightedTotal || b.weightedPercentage - a.weightedPercentage);
-  }
+  processedMockScores.sort((a, b) => compareRankedScores(a, b));
   
   const sortedMockScores = processedMockScores.map(x => x.scoreObj);
   
@@ -2430,18 +2443,18 @@ function renderIndividualReport() {
   // Calculate rankings to show candidate position
   const rankingList = mockScores.map(cs => {
     const stats = getMockDataForCandidate(currentMock, cs);
+    const accuracyData = getAccuracyDataForCandidate(currentMock, cs);
     return {
       candidateName: cs.candidateName,
-      rawTotal: stats.rawTotal,
-      weightedTotal: stats.weightedTotal
+      ...stats,
+      ...accuracyData
     };
   });
   
-  // Sort
-  rankingList.sort((a, b) => b.rawTotal - a.rawTotal);
+  rankingList.sort((a, b) => compareRankedScores(a, b, "raw"));
   const rankRaw = rankingList.findIndex(r => r.candidateName === selectedCandidateName) + 1;
   
-  rankingList.sort((a, b) => b.weightedTotal - a.weightedTotal);
+  rankingList.sort((a, b) => compareRankedScores(a, b, "weighted"));
   const rankWeighted = rankingList.findIndex(r => r.candidateName === selectedCandidateName) + 1;
   
   const stats = getMockDataForCandidate(currentMock, candScore);
