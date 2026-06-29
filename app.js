@@ -1450,6 +1450,23 @@ function compareRankedScores(a, b, type = rankingType) {
   return (a.candidateName || a.name || "").localeCompare(b.candidateName || b.name || "");
 }
 
+function calculateMeanAndSd(values) {
+  const numericValues = values.filter(value => typeof value === "number" && Number.isFinite(value));
+  const count = numericValues.length;
+  if (count === 0) {
+    return { count: 0, mean: null, sd: null };
+  }
+  
+  const mean = numericValues.reduce((sum, value) => sum + value, 0) / count;
+  const variance = numericValues.reduce((sum, value) => sum + Math.pow(value - mean, 2), 0) / count;
+  
+  return {
+    count,
+    mean,
+    sd: Math.sqrt(variance)
+  };
+}
+
 function calculateAndRenderLeaderboard() {
   const currentMock = db.mocks.find(m => m.name === selectedMockName);
   if (!currentMock) return;
@@ -1557,10 +1574,13 @@ function renderSummaryWidgets(processedScores, mock) {
   
   // Average Score
   if (processedScores.length > 0) {
-    const avgPercent = processedScores.reduce((acc, row) => acc + (rankingType === "raw" ? row.rawPercentage : row.weightedPercentage), 0) / processedScores.length;
-    document.getElementById("widget-avg-score").innerHTML = `${avgPercent.toFixed(1)} <span class="card-value-unit">%</span>`;
+    const percentValues = processedScores.map(row => rankingType === "raw" ? row.rawPercentage : row.weightedPercentage);
+    const percentStats = calculateMeanAndSd(percentValues);
+    document.getElementById("widget-avg-score").innerHTML = `${percentStats.mean.toFixed(1)} <span class="card-value-unit">%</span>`;
+    document.getElementById("widget-score-sd").textContent = `SD: ${percentStats.sd.toFixed(1)}%`;
   } else {
     document.getElementById("widget-avg-score").innerHTML = `0.0 <span class="card-value-unit">%</span>`;
+    document.getElementById("widget-score-sd").textContent = "SD: -";
   }
   
   // Find Strongest and Weakest Sub-tests based on group average percent
@@ -2200,23 +2220,25 @@ function renderDevelopmentChart() {
   
   // Calculate group mean dataset
   const meanDataPoints = [];
+  const sdDataPoints = [];
   const meanRanks = [];
   const meanTotalCounts = [];
   
   sortedMocks.forEach(mock => {
     const mockStatsObj = stats[mock.name];
-    let sum = 0;
-    let count = 0;
+    const percentValues = [];
     if (mockStatsObj) {
       for (const candName in mockStatsObj) {
-        sum += mockStatsObj[candName].percentage;
-        count++;
+        percentValues.push(mockStatsObj[candName].percentage);
       }
     }
-    const mean = count > 0 ? parseFloat((sum / count).toFixed(1)) : null;
+    const groupStats = calculateMeanAndSd(percentValues);
+    const mean = groupStats.mean !== null ? parseFloat(groupStats.mean.toFixed(1)) : null;
+    const sd = groupStats.sd !== null ? parseFloat(groupStats.sd.toFixed(1)) : null;
     meanDataPoints.push(mean);
+    sdDataPoints.push(sd);
     meanRanks.push(null);
-    meanTotalCounts.push(null);
+    meanTotalCounts.push(groupStats.count || null);
   });
   
   const isDark = !document.body.classList.contains("light-theme");
@@ -2226,6 +2248,7 @@ function renderDevelopmentChart() {
   datasets.push({
     label: 'ค่าเฉลี่ยกลุ่ม (Mean)',
     data: meanDataPoints,
+    sds: sdDataPoints,
     ranks: meanRanks,
     totalCounts: meanTotalCounts,
     borderColor: meanColor,
@@ -2312,6 +2335,10 @@ function renderDevelopmentChart() {
               const idx = context.dataIndex;
               const rank = context.dataset.ranks[idx];
               const totalCount = context.dataset.totalCounts[idx];
+              const sd = context.dataset.sds && context.dataset.sds[idx];
+              if (sd !== undefined && sd !== null) {
+                return `${label}: ${percentage.toFixed(1)}% (SD ${sd.toFixed(1)}%, n=${totalCount || 0})`;
+              }
               if (rank) {
                 return `${label}: ${percentage.toFixed(1)}% (อันดับที่ ${rank} / ${totalCount})`;
               }

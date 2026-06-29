@@ -322,6 +322,14 @@ header {
   color: var(--text-muted);
 }
 
+.card-stat-detail {
+  color: var(--text-muted);
+  font-family: var(--font-heading);
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin: -0.1rem 0 0.35rem;
+}
+
 /* Tab Navigation */
 .tabs-navigation {
   display: flex;
