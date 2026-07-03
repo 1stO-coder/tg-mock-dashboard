@@ -29,6 +29,17 @@
   --glow-shadow: 0 0 15px rgba(99, 102, 241, 0.25);
   --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   --radius: 14px;
+
+  /* Component Colors - Dark Theme Defaults */
+  --bg-table-th: rgba(13, 18, 30, 0.9);
+  --bg-table-td: rgba(20, 27, 45, 0.3);
+  --bg-table-hover: rgba(255, 255, 255, 0.02);
+  --bg-checkbox: rgba(13, 18, 30, 0.3);
+  --bg-checkbox-hover: rgba(255, 255, 255, 0.03);
+  --bg-sync-badge: rgba(13, 18, 30, 0.5);
+  --bg-insight-item: rgba(13, 18, 30, 0.4);
+  --bg-rec-card: rgba(20, 27, 45, 0.4);
+  --bg-scrollbar-thumb: rgba(255, 255, 255, 0.1);
 }
 
 /* Light Theme overrides (Controlled by class .light-theme) */
@@ -46,6 +57,17 @@
   --text-muted: #4b5563;
   --card-shadow: 0 8px 24px 0 rgba(0, 0, 0, 0.08);
   --glow-shadow: 0 0 15px rgba(99, 102, 241, 0.1);
+
+  /* Component Colors - Light Theme Overrides */
+  --bg-table-th: #f3f4f6;
+  --bg-table-td: #ffffff;
+  --bg-table-hover: rgba(99, 102, 241, 0.04);
+  --bg-checkbox: #ffffff;
+  --bg-checkbox-hover: rgba(99, 102, 241, 0.04);
+  --bg-sync-badge: #ffffff;
+  --bg-insight-item: #ffffff;
+  --bg-rec-card: #ffffff;
+  --bg-scrollbar-thumb: rgba(0, 0, 0, 0.15);
 }
 
 /* Reset & Base Styles */
@@ -94,7 +116,7 @@ a:hover {
   background: var(--bg-deep);
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--bg-scrollbar-thumb);
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
@@ -258,7 +280,7 @@ header {
   font-size: 0.8rem;
   font-weight: 600;
   border: 1px solid var(--border-light);
-  background: rgba(13, 18, 30, 0.5);
+  background-color: var(--bg-sync-badge);
   backdrop-filter: blur(8px);
 }
 
@@ -445,7 +467,7 @@ header {
 }
 
 .score-table th {
-  background-color: rgba(13, 18, 30, 0.9);
+  background-color: var(--bg-table-th);
   padding: 1rem;
   font-weight: 600;
   color: var(--text-muted);
@@ -456,11 +478,11 @@ header {
 .score-table td {
   padding: 1rem;
   border-bottom: 1px solid var(--border-light);
-  background-color: rgba(20, 27, 45, 0.3);
+  background-color: var(--bg-table-td);
 }
 
 .score-table tr:hover td {
-  background-color: rgba(255, 255, 255, 0.02);
+  background-color: var(--bg-table-hover);
 }
 
 .rank-cell {
@@ -559,11 +581,11 @@ header {
   border: 1px solid var(--border-light);
   cursor: pointer;
   transition: var(--transition);
-  background-color: rgba(13, 18, 30, 0.3);
+  background-color: var(--bg-checkbox);
 }
 
 .checkbox-label:hover {
-  background-color: rgba(255, 255, 255, 0.03);
+  background-color: var(--bg-checkbox-hover);
   border-color: var(--color-primary);
 }
 
@@ -675,7 +697,7 @@ header {
   padding: 1rem;
   border-radius: var(--radius);
   border: 1px solid var(--border-light);
-  background-color: rgba(13, 18, 30, 0.4);
+  background-color: var(--bg-insight-item);
 }
 
 .insight-icon {
@@ -757,7 +779,7 @@ header {
   padding: 1.2rem;
   border-radius: var(--radius);
   border: 1px solid var(--border-light);
-  background-color: rgba(20, 27, 45, 0.4);
+  background-color: var(--bg-rec-card);
   position: relative;
   overflow: hidden;
 }
