@@ -2357,15 +2357,22 @@ function varStyle(varName) {
 }
 
 // Heatmap Breakdown Rendering & Color Interpolator
-function getHeatmapColor(pct) {
+function getHeatmapColor(pct, meanPct) {
+  if (meanPct === undefined) meanPct = 50;
   const isLight = document.body.classList.contains("light-theme");
   
-  // Interpolate Hue (H) in HSL: 0% is Red (0), 50% is Orange (38), 100% is Green (145)
+  const diff = pct - meanPct;
+  const maxDiff = 30; // Max difference threshold for full color saturation
+  
   let h;
-  if (pct < 50) {
-    h = (pct / 50) * 38;
+  if (diff < 0) {
+    // Underperforming: interpolate from Yellow/Orange (Hue 50) down to Red (Hue 0)
+    const ratio = Math.min(1, Math.abs(diff) / maxDiff);
+    h = 50 - ratio * 50;
   } else {
-    h = 38 + ((pct - 50) / 50) * (145 - 38);
+    // Outperforming: interpolate from Yellow/Orange (Hue 50) up to Green (Hue 140)
+    const ratio = Math.min(1, diff / maxDiff);
+    h = 50 + ratio * 90;
   }
   
   let bg, text;
@@ -2410,6 +2417,26 @@ function renderHeatmap() {
     return;
   }
   
+  // Calculate part averages (Means) for comparison
+  const partMeans = {};
+  currentMock.parts.forEach(part => {
+    let sum = 0;
+    let count = 0;
+    mockScores.forEach(s => {
+      const val = s.scores[part.name];
+      if (val !== undefined && val !== null) {
+        sum += val;
+        count++;
+      }
+    });
+    const meanScore = count > 0 ? sum / count : 0;
+    const meanPct = part.max > 0 ? (meanScore / part.max) * 100 : 0;
+    partMeans[part.name] = {
+      meanScore: meanScore,
+      meanPct: meanPct
+    };
+  });
+  
   // Sort candidates by Rank (rank 1 to last)
   const processedMockScores = mockScores.map(s => {
     const data = getMockDataForCandidate(currentMock, s);
@@ -2434,9 +2461,15 @@ function renderHeatmap() {
       const scoreVal = s.scores[part.name] || 0;
       const pct = part.max > 0 ? (scoreVal / part.max) * 100 : 0;
       
-      const colors = getHeatmapColor(pct);
+      const partMean = partMeans[part.name] || { meanScore: 0, meanPct: 50 };
+      const colors = getHeatmapColor(pct, partMean.meanPct);
       
-      tr.innerHTML += `<td class="heatmap-cell" style="background-color: ${colors.bg} !important; color: ${colors.text} !important;" title="${pct.toFixed(1)}%">${scoreVal}</td>`;
+      const diff = pct - partMean.meanPct;
+      const diffSign = diff >= 0 ? "+" : "";
+      
+      const tooltip = `คะแนน: ${scoreVal}/${part.max} (${pct.toFixed(1)}%)\nค่าเฉลี่ยกลุ่ม: ${partMean.meanScore.toFixed(1)}/${part.max} (${partMean.meanPct.toFixed(1)}%)\nส่วนต่างกลุ่ม: ${diffSign}${diff.toFixed(1)}%`;
+      
+      tr.innerHTML += `<td class="heatmap-cell" style="background-color: ${colors.bg} !important; color: ${colors.text} !important;" title="${tooltip}">${scoreVal}</td>`;
     });
     tbody.appendChild(tr);
   });
@@ -2523,6 +2556,10 @@ function renderIndividualReport() {
     const hasAccuracy = attempted !== undefined && attempted !== null && attempted > 0;
     const accuracy = hasAccuracy ? (val / attempted) * 100 : 0;
     
+    // Calculate difference compared to group average percentage
+    const avgPct = part.max > 0 ? (average / part.max) * 100 : 0;
+    const diff = pct - avgPct;
+    
     return { 
       name: part.name, 
       score: val, 
@@ -2533,24 +2570,31 @@ function renderIndividualReport() {
       average,
       attempted,
       hasAccuracy,
-      accuracy
+      accuracy,
+      diff
     };
   });
   
-  // Sort parts by performance percentage
-  partPerformance.sort((a, b) => b.pct - a.pct);
+  // Sort parts by performance difference compared to the average (descending)
+  partPerformance.sort((a, b) => b.diff - a.diff);
   
-  // Rendering strengths (Top 3)
+  // Rendering strengths (Top 3 - highest difference from average)
   const strengthsContainer = document.getElementById("strengths-list");
   strengthsContainer.innerHTML = "";
   const strengths = partPerformance.slice(0, 3);
   strengths.forEach(st => {
     const div = document.createElement("div");
     div.className = "insight-item";
+    
+    const diffLabel = st.diff < 0 
+      ? `ต่ำกว่าเฉลี่ย ${Math.abs(st.diff).toFixed(1)}%` 
+      : `สูงกว่าเฉลี่ย +${st.diff.toFixed(1)}%`;
+    const diffColor = st.diff >= 0 ? "var(--color-success)" : "var(--color-danger)";
+    
     div.innerHTML = `
       <div class="insight-icon strength-icon"><i class="fa-solid fa-circle-arrow-up"></i></div>
       <div class="insight-details">
-        <h4>${st.name} <small style="color:var(--color-success); font-weight:bold;">${st.pct.toFixed(0)}%</small></h4>
+        <h4>${st.name} <small style="color:var(--color-success); font-weight:bold;">${st.pct.toFixed(0)}%</small> <span style="font-size: 0.8rem; font-weight: normal; color: ${diffColor}; margin-left: 0.3rem;">(${diffLabel})</span></h4>
         <p>ทำได้ ${st.score} / ${st.max} คะแนน${accEnabled && st.hasAccuracy ? ` | ความแม่นยำ: <strong style="color: var(--color-primary);">${st.accuracy.toFixed(1)}%</strong>` : ""}</p>
         <p class="comparison-text" style="font-size:0.8rem; color:var(--text-muted); margin-top:0.2rem;">
           <i class="fa-solid fa-scale-balanced"></i> ค่าเฉลี่ย: <strong>${st.average.toFixed(1)}</strong> | สูงสุด: <strong>${st.bestScore}</strong> (${st.bestCandidates})
@@ -2560,7 +2604,7 @@ function renderIndividualReport() {
     strengthsContainer.appendChild(div);
   });
   
-  // Rendering weaknesses (Bottom 3)
+  // Rendering weaknesses (Bottom 3 - lowest difference from average)
   const weaknessesContainer = document.getElementById("weaknesses-list");
   weaknessesContainer.innerHTML = "";
   // Weaknesses should be taken from the bottom, so reverse slice
@@ -2568,10 +2612,16 @@ function renderIndividualReport() {
   weaknesses.forEach(wk => {
     const div = document.createElement("div");
     div.className = "insight-item";
+    
+    const diffLabel = wk.diff < 0 
+      ? `ต่ำกว่าเฉลี่ย ${Math.abs(wk.diff).toFixed(1)}%` 
+      : `สูงกว่าเฉลี่ย +${wk.diff.toFixed(1)}%`;
+    const diffColor = wk.diff >= 0 ? "var(--color-success)" : "var(--color-danger)";
+    
     div.innerHTML = `
       <div class="insight-icon weakness-icon"><i class="fa-solid fa-circle-arrow-down"></i></div>
       <div class="insight-details">
-        <h4>${wk.name} <small style="color:var(--color-danger); font-weight:bold;">${wk.pct.toFixed(0)}%</small></h4>
+        <h4>${wk.name} <small style="color:var(--color-danger); font-weight:bold;">${wk.pct.toFixed(0)}%</small> <span style="font-size: 0.8rem; font-weight: normal; color: ${diffColor}; margin-left: 0.3rem;">(${diffLabel})</span></h4>
         <p>ทำได้ ${wk.score} / ${wk.max} คะแนน${accEnabled && wk.hasAccuracy ? ` | ความแม่นยำ: <strong style="color: var(--color-danger);">${wk.accuracy.toFixed(1)}%</strong>` : ""}</p>
         <p class="comparison-text" style="font-size:0.8rem; color:var(--text-muted); margin-top:0.2rem;">
           <i class="fa-solid fa-scale-balanced"></i> ค่าเฉลี่ย: <strong>${wk.average.toFixed(1)}</strong> | สูงสุด: <strong>${wk.bestScore}</strong> (${wk.bestCandidates})
@@ -2580,7 +2630,7 @@ function renderIndividualReport() {
     `;
     weaknessesContainer.appendChild(div);
   });
-
+  
   // Render Score Breakdown & Self-Evaluation Table
   const breakdownTbody = document.getElementById("ind-score-breakdown-tbody");
   
