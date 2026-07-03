@@ -1544,7 +1544,7 @@ function calculateAndRenderLeaderboard() {
     if (isSelected) tr.setAttribute("style", "background-color: rgba(99, 102, 241, 0.1);");
     tr.innerHTML = `
       <td class="rank-cell">${rankHtml}</td>
-      <td class="name-cell notranslate" translate="no" onclick="selectCandidate('${row.candidateName}')">${row.candidateName}</td>
+      <td class="name-cell notranslate" translate="no" spellcheck="false" data-gramm="false" data-enable-grammarly="false" onclick="selectCandidate('${row.candidateName}')">${row.candidateName}</td>
       <td class="score-cell">${totalScoreStr}</td>
       <td class="score-cell">${percentage.toFixed(1)}%</td>
       ${accEnabled ? `<td class="score-cell" style="color: var(--color-primary); font-weight: 600;">${row.hasAccuracyData ? row.accuracy.toFixed(1) + '%' : '-'}</td>` : ""}
@@ -2359,50 +2359,28 @@ function varStyle(varName) {
 // Heatmap Breakdown Rendering & Color Interpolator
 function getHeatmapColor(pct, meanPct) {
   if (meanPct === undefined) meanPct = 50;
-  const isLight = document.body.classList.contains("light-theme");
   
   const diff = pct - meanPct;
   const maxDiff = 30; // Max difference threshold for full color saturation
   
   let bg, text;
-  if (isLight) {
-    // Solid light pastel colors (high lightness, high saturation, dark text)
-    if (diff < 0) {
-      const ratio = Math.min(1, Math.abs(diff) / maxDiff);
-      // Red: H=0, S=95%, L=90% | Yellow: H=50, S=90%, L=92%
-      const h = 50 - ratio * 50;
-      const s = 90 + ratio * 5;
-      const l = 92 - ratio * 2;
-      bg = `hsl(${h}, ${s}%, ${l}%)`;
-      text = `hsl(${h}, 85%, 28%)`;
-    } else {
-      const ratio = Math.min(1, diff / maxDiff);
-      // Green: H=140, S=85%, L=88% | Yellow: H=50, S=90%, L=92%
-      const h = 50 + ratio * 90;
-      const s = 90 - ratio * 5;
-      const l = 92 - ratio * 4;
-      bg = `hsl(${h}, ${s}%, ${l}%)`;
-      text = `hsl(${h}, 85%, 25%)`;
-    }
+  // Use beautiful solid light pastel colors for both Light and Dark themes to ensure vibrant, non-muddy display
+  if (diff < 0) {
+    const ratio = Math.min(1, Math.abs(diff) / maxDiff);
+    // Red: H=0, S=95%, L=90% | Yellow: H=50, S=90%, L=92%
+    const h = 50 - ratio * 50;
+    const s = 90 + ratio * 5;
+    const l = 92 - ratio * 2;
+    bg = `hsl(${h}, ${s}%, ${l}%)`;
+    text = `hsl(${h}, 85%, 28%)`;
   } else {
-    // Solid dark pastel colors (low lightness, medium saturation, glowing light text)
-    if (diff < 0) {
-      const ratio = Math.min(1, Math.abs(diff) / maxDiff);
-      // Red: H=0, S=50%, L=18% | Yellow: H=50, S=45%, L=16%
-      const h = 50 - ratio * 50;
-      const s = 45 + ratio * 5;
-      const l = 16 + ratio * 2;
-      bg = `hsl(${h}, ${s}%, ${l}%)`;
-      text = `hsl(${h}, 95%, 80%)`;
-    } else {
-      const ratio = Math.min(1, diff / maxDiff);
-      // Green: H=140, S=45%, L=16% | Yellow: H=50, S=45%, L=16%
-      const h = 50 + ratio * 90;
-      const s = 45;
-      const l = 16;
-      bg = `hsl(${h}, ${s}%, ${l}%)`;
-      text = `hsl(${h}, 95%, 80%)`;
-    }
+    const ratio = Math.min(1, diff / maxDiff);
+    // Green: H=140, S=85%, L=88% | Yellow: H=50, S=90%, L=92%
+    const h = 50 + ratio * 90;
+    const s = 90 - ratio * 5;
+    const l = 92 - ratio * 4;
+    bg = `hsl(${h}, ${s}%, ${l}%)`;
+    text = `hsl(${h}, 85%, 25%)`;
   }
   
   return { bg, text };
@@ -2476,7 +2454,7 @@ function renderHeatmap() {
   
   sortedMockScores.forEach(s => {
     const tr = document.createElement("tr");
-    tr.innerHTML = `<td class="name-cell notranslate" translate="no" onclick="selectCandidate('${s.candidateName}')">${s.candidateName}</td>`;
+    tr.innerHTML = `<td class="name-cell notranslate" translate="no" spellcheck="false" data-gramm="false" data-enable-grammarly="false" onclick="selectCandidate('${s.candidateName}')">${s.candidateName}</td>`;
     
     currentMock.parts.forEach(part => {
       const scoreVal = s.scores[part.name] || 0;
