@@ -40,6 +40,7 @@
   --bg-insight-item: rgba(13, 18, 30, 0.4);
   --bg-rec-card: rgba(20, 27, 45, 0.4);
   --bg-scrollbar-thumb: rgba(255, 255, 255, 0.1);
+  --bg-table-sticky: #0b0f19;
 }
 
 /* Light Theme overrides (Controlled by class .light-theme) */
@@ -68,6 +69,7 @@
   --bg-insight-item: #ffffff;
   --bg-rec-card: #ffffff;
   --bg-scrollbar-thumb: rgba(0, 0, 0, 0.15);
+  --bg-table-sticky: #ffffff;
 }
 
 /* Reset & Base Styles */
@@ -619,13 +621,17 @@ header {
   position: sticky;
   left: 0;
   z-index: 10;
-  background-color: var(--bg-deep) !important;
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.15);
   border-right: 1px solid var(--border-light);
 }
 
 #heatmap-table th:first-child {
+  background-color: var(--bg-table-th) !important;
   z-index: 11;
+}
+
+#heatmap-table td:first-child {
+  background-color: var(--bg-table-sticky) !important;
 }
 
 .heatmap-cell {
@@ -1301,7 +1307,6 @@ header {
     width: 112px;
     min-width: 112px;
     max-width: 112px;
-    background-color: var(--bg-deep) !important;
     border-right: 1px solid var(--border-light);
     box-shadow: 2px 0 5px rgba(0, 0, 0, 0.15);
     white-space: normal;
@@ -1309,7 +1314,12 @@ header {
   }
 
   #ind-score-breakdown-card th:first-child {
+    background-color: var(--bg-table-th) !important;
     z-index: 11;
+  }
+
+  #ind-score-breakdown-card td:first-child {
+    background-color: var(--bg-table-sticky) !important;
   }
 
   .chart-container {
