@@ -2359,28 +2359,31 @@ function varStyle(varName) {
 // Heatmap Breakdown Rendering & Color Interpolator
 function getHeatmapColor(pct, meanPct) {
   if (meanPct === undefined) meanPct = 50;
+  const isLight = document.body.classList.contains("light-theme");
   
   const diff = pct - meanPct;
   const maxDiff = 30; // Max difference threshold for full color saturation
   
-  let bg, text;
-  // Use beautiful solid light pastel colors for both Light and Dark themes to ensure vibrant, non-muddy display
+  let h;
   if (diff < 0) {
+    // Underperforming: interpolate from Yellow/Orange (Hue 50) down to Red (Hue 0)
     const ratio = Math.min(1, Math.abs(diff) / maxDiff);
-    // Red: H=0, S=95%, L=90% | Yellow: H=50, S=90%, L=92%
-    const h = 50 - ratio * 50;
-    const s = 90 + ratio * 5;
-    const l = 92 - ratio * 2;
-    bg = `hsl(${h}, ${s}%, ${l}%)`;
-    text = `hsl(${h}, 85%, 28%)`;
+    h = 50 - ratio * 50;
   } else {
+    // Outperforming: interpolate from Yellow/Orange (Hue 50) up to Green (Hue 140)
     const ratio = Math.min(1, diff / maxDiff);
-    // Green: H=140, S=85%, L=88% | Yellow: H=50, S=90%, L=92%
-    const h = 50 + ratio * 90;
-    const s = 90 - ratio * 5;
-    const l = 92 - ratio * 4;
-    bg = `hsl(${h}, ${s}%, ${l}%)`;
-    text = `hsl(${h}, 85%, 25%)`;
+    h = 50 + ratio * 90;
+  }
+  
+  let bg, text;
+  if (isLight) {
+    // Light theme: blends with light background (clean pastel overlay)
+    bg = `hsla(${h}, 90%, 55%, 0.18)`;
+    text = `hsl(${h}, 90%, 28%)`;
+  } else {
+    // Dark theme: blends with dark background (glowing pastel overlay, never muddy!)
+    bg = `hsla(${h}, 90%, 65%, 0.25)`;
+    text = `hsl(${h}, 95%, 82%)`;
   }
   
   return { bg, text };
