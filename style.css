@@ -491,7 +491,6 @@ header {
 
 .name-cell:hover {
   color: var(--color-primary);
-  text-decoration: underline;
 }
 
 .score-cell {

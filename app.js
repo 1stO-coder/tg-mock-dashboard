@@ -1544,7 +1544,7 @@ function calculateAndRenderLeaderboard() {
     if (isSelected) tr.setAttribute("style", "background-color: rgba(99, 102, 241, 0.1);");
     tr.innerHTML = `
       <td class="rank-cell">${rankHtml}</td>
-      <td class="name-cell" onclick="selectCandidate('${row.candidateName}')">${row.candidateName}</td>
+      <td class="name-cell notranslate" translate="no" onclick="selectCandidate('${row.candidateName}')">${row.candidateName}</td>
       <td class="score-cell">${totalScoreStr}</td>
       <td class="score-cell">${percentage.toFixed(1)}%</td>
       ${accEnabled ? `<td class="score-cell" style="color: var(--color-primary); font-weight: 600;">${row.hasAccuracyData ? row.accuracy.toFixed(1) + '%' : '-'}</td>` : ""}
@@ -2455,7 +2455,7 @@ function renderHeatmap() {
   
   sortedMockScores.forEach(s => {
     const tr = document.createElement("tr");
-    tr.innerHTML = `<td class="name-cell" onclick="selectCandidate('${s.candidateName}')">${s.candidateName}</td>`;
+    tr.innerHTML = `<td class="name-cell notranslate" translate="no" onclick="selectCandidate('${s.candidateName}')">${s.candidateName}</td>`;
     
     currentMock.parts.forEach(part => {
       const scoreVal = s.scores[part.name] || 0;
