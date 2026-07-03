@@ -2364,24 +2364,45 @@ function getHeatmapColor(pct, meanPct) {
   const diff = pct - meanPct;
   const maxDiff = 30; // Max difference threshold for full color saturation
   
-  let h;
-  if (diff < 0) {
-    // Underperforming: interpolate from Yellow/Orange (Hue 50) down to Red (Hue 0)
-    const ratio = Math.min(1, Math.abs(diff) / maxDiff);
-    h = 50 - ratio * 50;
-  } else {
-    // Outperforming: interpolate from Yellow/Orange (Hue 50) up to Green (Hue 140)
-    const ratio = Math.min(1, diff / maxDiff);
-    h = 50 + ratio * 90;
-  }
-  
   let bg, text;
   if (isLight) {
-    bg = `hsla(${h}, 85%, 45%, 0.15)`;
-    text = `hsl(${h}, 90%, 28%)`;
+    // Solid light pastel colors (high lightness, high saturation, dark text)
+    if (diff < 0) {
+      const ratio = Math.min(1, Math.abs(diff) / maxDiff);
+      // Red: H=0, S=95%, L=90% | Yellow: H=50, S=90%, L=92%
+      const h = 50 - ratio * 50;
+      const s = 90 + ratio * 5;
+      const l = 92 - ratio * 2;
+      bg = `hsl(${h}, ${s}%, ${l}%)`;
+      text = `hsl(${h}, 85%, 28%)`;
+    } else {
+      const ratio = Math.min(1, diff / maxDiff);
+      // Green: H=140, S=85%, L=88% | Yellow: H=50, S=90%, L=92%
+      const h = 50 + ratio * 90;
+      const s = 90 - ratio * 5;
+      const l = 92 - ratio * 4;
+      bg = `hsl(${h}, ${s}%, ${l}%)`;
+      text = `hsl(${h}, 85%, 25%)`;
+    }
   } else {
-    bg = `hsla(${h}, 80%, 40%, 0.18)`;
-    text = `hsl(${h}, 90%, 75%)`;
+    // Solid dark pastel colors (low lightness, medium saturation, glowing light text)
+    if (diff < 0) {
+      const ratio = Math.min(1, Math.abs(diff) / maxDiff);
+      // Red: H=0, S=50%, L=18% | Yellow: H=50, S=45%, L=16%
+      const h = 50 - ratio * 50;
+      const s = 45 + ratio * 5;
+      const l = 16 + ratio * 2;
+      bg = `hsl(${h}, ${s}%, ${l}%)`;
+      text = `hsl(${h}, 95%, 80%)`;
+    } else {
+      const ratio = Math.min(1, diff / maxDiff);
+      // Green: H=140, S=45%, L=16% | Yellow: H=50, S=45%, L=16%
+      const h = 50 + ratio * 90;
+      const s = 45;
+      const l = 16;
+      bg = `hsl(${h}, ${s}%, ${l}%)`;
+      text = `hsl(${h}, 95%, 80%)`;
+    }
   }
   
   return { bg, text };
