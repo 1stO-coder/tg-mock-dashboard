@@ -923,7 +923,7 @@ let db = {
 // Application State
 let selectedMockName = "";
 let selectedCandidateName = "";
-let rankingType = "raw"; // "raw" or "weighted"
+let rankingType = "weighted"; // "weighted", "raw", or "sten"
 let targetScores = JSON.parse(localStorage.getItem("tg_mock_targets") || "{}");
 let mockFormMode = "create"; // "create" or "edit"
 let editingOriginalMockName = "";
@@ -1433,19 +1433,96 @@ function getAccuracyDataForCandidate(mock, candidateScore) {
   };
 }
 
+function getProcessedScores(currentMock, mockScores) {
+  if (!currentMock || !mockScores) return [];
+  
+  // Calculate group stats for STEN score calculation
+  const groupStatsByPart = {};
+  currentMock.parts.forEach(part => {
+    const rawScores = mockScores.map(cs => {
+      let val = cs.scores[part.name];
+      return (val !== undefined && val !== null) ? val : 0;
+    });
+    const count = rawScores.length;
+    const mean = count > 0 ? rawScores.reduce((a, b) => a + b, 0) / count : 0;
+    const variance = count > 0 ? rawScores.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / count : 0;
+    const stdDev = Math.sqrt(variance);
+    groupStatsByPart[part.name] = { mean, stdDev };
+  });
+
+  return mockScores.map(candScore => {
+    const stats = getMockDataForCandidate(currentMock, candScore);
+    const accuracyData = getAccuracyDataForCandidate(currentMock, candScore);
+    
+    // Calculate STEN scores for each part
+    let stenTotal = 0;
+    let N = currentMock.parts.length;
+    const stenScoresByPart = {};
+    
+    currentMock.parts.forEach(part => {
+      let score = candScore.scores[part.name];
+      if (score === undefined || score === null) {
+        score = 0;
+      }
+      const partStats = groupStatsByPart[part.name];
+      let sten = 6; // default if stdDev is 0
+      if (partStats && partStats.stdDev > 0) {
+        const z = (score - partStats.mean) / partStats.stdDev;
+        sten = Math.max(1, Math.min(10, Math.round(z * 2 + 5.5)));
+      }
+      stenTotal += sten;
+      stenScoresByPart[part.name] = sten;
+    });
+    
+    const stenMax = N * 10;
+    const stenPercentage = stenMax > 0 ? (stenTotal / stenMax) * 100 : 0;
+    
+    return {
+      candidateName: candScore.candidateName,
+      ...stats,
+      ...accuracyData,
+      stenTotal,
+      stenMax,
+      stenPercentage,
+      stenScoresByPart
+    };
+  });
+}
+
 function compareRankedScores(a, b, type = rankingType) {
-  const primaryA = type === "raw" ? a.rawTotal : a.weightedTotal;
-  const primaryB = type === "raw" ? b.rawTotal : b.weightedTotal;
+  let primaryA = a.weightedTotal;
+  let primaryB = b.weightedTotal;
+  if (type === "raw") {
+    primaryA = a.rawTotal;
+    primaryB = b.rawTotal;
+  } else if (type === "sten") {
+    primaryA = a.stenTotal;
+    primaryB = b.stenTotal;
+  }
+  
   const primaryDiff = primaryB - primaryA;
   if (Math.abs(primaryDiff) > 0.000001) return primaryDiff;
   
   const accuracyDiff = (b.accuracy || 0) - (a.accuracy || 0);
   if (Math.abs(accuracyDiff) > 0.000001) return accuracyDiff;
   
-  const pctA = type === "raw" ? a.rawPercentage : a.weightedPercentage;
-  const pctB = type === "raw" ? b.rawPercentage : b.weightedPercentage;
+  let pctA = a.weightedPercentage;
+  let pctB = b.weightedPercentage;
+  if (type === "raw") {
+    pctA = a.rawPercentage;
+    pctB = b.rawPercentage;
+  } else if (type === "sten") {
+    pctA = a.stenPercentage;
+    pctB = b.stenPercentage;
+  }
+  
   const pctDiff = (pctB || 0) - (pctA || 0);
   if (Math.abs(pctDiff) > 0.000001) return pctDiff;
+  
+  if (type === "sten") {
+    const rawPctDiff = (b.rawPercentage || 0) - (a.rawPercentage || 0);
+    if (Math.abs(rawPctDiff) > 0.000001) return rawPctDiff;
+  }
   
   return (a.candidateName || a.name || "").localeCompare(b.candidateName || b.name || "");
 }
@@ -1477,12 +1554,16 @@ function calculateAndRenderLeaderboard() {
   // Dynamic header rendering
   const thead = document.getElementById("leaderboard-thead");
   if (thead) {
+    let scoreHeader = "คะแนนที่ได้ / คะแนนเต็ม";
+    if (rankingType === "sten") {
+      scoreHeader = "คะแนน STEN รวม / เต็ม";
+    }
     if (accEnabled) {
       thead.innerHTML = `
         <tr>
           <th class="rank-cell">ลำดับ</th>
           <th>ผู้เข้าสอบ</th>
-          <th>คะแนนที่ได้ / คะแนนเต็ม</th>
+          <th>${scoreHeader}</th>
           <th>คิดเป็นร้อยละ</th>
           <th>% Accuracy</th>
           <th class="progress-bar-cell">ความคืบหน้า</th>
@@ -1493,7 +1574,7 @@ function calculateAndRenderLeaderboard() {
         <tr>
           <th class="rank-cell">ลำดับ</th>
           <th>ผู้เข้าสอบ</th>
-          <th>คะแนนที่ได้ / คะแนนเต็ม</th>
+          <th>${scoreHeader}</th>
           <th>คิดเป็นร้อยละ</th>
           <th class="progress-bar-cell">ความคืบหน้า</th>
         </tr>
@@ -1501,16 +1582,7 @@ function calculateAndRenderLeaderboard() {
     }
   }
   
-  const processedScores = mockScores.map(candScore => {
-    const stats = getMockDataForCandidate(currentMock, candScore);
-    const accuracyData = getAccuracyDataForCandidate(currentMock, candScore);
-    
-    return {
-      candidateName: candScore.candidateName,
-      ...stats,
-      ...accuracyData
-    };
-  });
+  const processedScores = getProcessedScores(currentMock, mockScores);
   
   processedScores.sort((a, b) => compareRankedScores(a, b));
   
@@ -1537,8 +1609,15 @@ function calculateAndRenderLeaderboard() {
     
     const isSelected = row.candidateName === selectedCandidateName ? "style='background-color: var(--color-primary-glow);'" : "";
     
-    const percentage = rankingType === "raw" ? row.rawPercentage : row.weightedPercentage;
-    const totalScoreStr = rankingType === "raw" ? `${row.rawTotal} / ${row.rawMax}` : `${row.weightedTotal.toFixed(2)} / ${row.weightedMax}`;
+    let percentage = row.weightedPercentage;
+    let totalScoreStr = `${row.weightedTotal.toFixed(2)} / ${row.weightedMax}`;
+    if (rankingType === "raw") {
+      percentage = row.rawPercentage;
+      totalScoreStr = `${row.rawTotal} / ${row.rawMax}`;
+    } else if (rankingType === "sten") {
+      percentage = row.stenPercentage;
+      totalScoreStr = `${row.stenTotal} / ${row.stenMax}`;
+    }
     
     const tr = document.createElement("tr");
     if (isSelected) tr.setAttribute("style", "background-color: rgba(99, 102, 241, 0.1);");
@@ -1574,7 +1653,11 @@ function renderSummaryWidgets(processedScores, mock) {
   
   // Average Score
   if (processedScores.length > 0) {
-    const percentValues = processedScores.map(row => rankingType === "raw" ? row.rawPercentage : row.weightedPercentage);
+    const percentValues = processedScores.map(row => {
+      if (rankingType === "raw") return row.rawPercentage;
+      if (rankingType === "sten") return row.stenPercentage;
+      return row.weightedPercentage;
+    });
     const percentStats = calculateMeanAndSd(percentValues);
     document.getElementById("widget-avg-score").innerHTML = `${percentStats.mean.toFixed(1)} <span class="card-value-unit">%</span>`;
     document.getElementById("widget-score-sd").textContent = `SD: ${percentStats.sd.toFixed(1)}%`;
@@ -1620,16 +1703,22 @@ function renderBarChart() {
   if (!currentMock) return;
   
   const mockScores = db.scores.filter(s => s.mockName === selectedMockName);
-  const processedScores = mockScores.map(candScore => {
-    const stats = getMockDataForCandidate(currentMock, candScore);
-    const accuracyData = getAccuracyDataForCandidate(currentMock, candScore);
+  const processedScores = getProcessedScores(currentMock, mockScores).map(row => {
+    let val = row.weightedPercentage;
+    let displayVal = row.weightedTotal;
+    if (rankingType === "raw") {
+      val = row.rawPercentage;
+      displayVal = row.rawTotal;
+    } else if (rankingType === "sten") {
+      val = row.stenPercentage;
+      displayVal = row.stenTotal;
+    }
     return {
-      name: candScore.candidateName,
-      candidateName: candScore.candidateName,
-      val: rankingType === "raw" ? stats.rawPercentage : stats.weightedPercentage,
-      displayVal: rankingType === "raw" ? stats.rawTotal : stats.weightedTotal,
-      ...stats,
-      ...accuracyData
+      name: row.candidateName,
+      candidateName: row.candidateName,
+      val,
+      displayVal,
+      ...row
     };
   });
   
@@ -1649,12 +1738,19 @@ function renderBarChart() {
   const textColor = isDark ? "#9ca3af" : "#4b5563";
   const gridColor = isDark ? "rgba(255, 255, 255, 0.06)" : "rgba(0, 0, 0, 0.06)";
   
+  let labelPrefix = "ถ่วงน้ำหนัก";
+  if (rankingType === "raw") {
+    labelPrefix = "คะแนนดิบ";
+  } else if (rankingType === "sten") {
+    labelPrefix = "คะแนน STEN";
+  }
+  
   barChartInstance = new Chart(ctx, {
     type: 'bar',
     data: {
       labels: labels,
       datasets: [{
-        label: `คะแนนเฉลี่ยร้อยละ (${rankingType === "raw" ? "คะแนนดิบ" : "ถ่วงน้ำหนัก"})`,
+        label: `คะแนนเฉลี่ยร้อยละ (${labelPrefix})`,
         data: dataVals,
         backgroundColor: 'rgba(99, 102, 241, 0.65)',
         borderColor: '#6366f1',
@@ -1687,8 +1783,14 @@ function renderBarChart() {
           callbacks: {
             label: function(context) {
               const idx = context.dataIndex;
-              const suffix = rankingType === "raw" ? " คะแนนดิบ" : " คะแนนถ่วงน้ำหนัก";
-              const rawVal = typeof rawValues[idx] === 'number' ? rawValues[idx].toFixed(1) : rawValues[idx];
+              let suffix = " คะแนนถ่วงน้ำหนัก";
+              if (rankingType === "raw") {
+                suffix = " คะแนนดิบ";
+              } else if (rankingType === "sten") {
+                suffix = " คะแนน STEN";
+              }
+              const val = rawValues[idx];
+              const rawVal = (rankingType === "raw" || rankingType === "sten") && typeof val === 'number' ? Math.round(val) : (typeof val === 'number' ? val.toFixed(1) : val);
               return `ร้อยละ: ${context.parsed.y.toFixed(1)}% (${rawVal}${suffix})`;
             }
           }
@@ -2010,25 +2112,23 @@ function calculateAllMocksStats() {
   const stats = {};
   db.mocks.forEach(mock => {
     const mockScores = db.scores.filter(s => s.mockName === mock.name);
-    const processed = mockScores.map(cs => {
-      const data = getMockDataForCandidate(mock, cs);
-      const accuracyData = getAccuracyDataForCandidate(mock, cs);
-      return {
-        candidateName: cs.candidateName,
-        percentage: rankingType === "raw" ? data.rawPercentage : data.weightedPercentage,
-        ...data,
-        ...accuracyData
-      };
-    });
+    const processed = getProcessedScores(mock, mockScores);
     
     processed.sort((a, b) => compareRankedScores(a, b));
     
     stats[mock.name] = {};
     processed.forEach((item, index) => {
+      let percentage = item.weightedPercentage;
+      if (rankingType === "raw") {
+        percentage = item.rawPercentage;
+      } else if (rankingType === "sten") {
+        percentage = item.stenPercentage;
+      }
+      
       stats[mock.name][item.candidateName] = {
         rank: index + 1,
         totalCount: processed.length,
-        percentage: item.percentage,
+        percentage: percentage,
         rawTotal: item.rawTotal,
         rawMax: item.rawMax
       };
@@ -2440,20 +2540,12 @@ function renderHeatmap() {
   });
   
   // Sort candidates by Rank (rank 1 to last)
-  const processedMockScores = mockScores.map(s => {
-    const data = getMockDataForCandidate(currentMock, s);
-    const accuracyData = getAccuracyDataForCandidate(currentMock, s);
-    return {
-      scoreObj: s,
-      candidateName: s.candidateName,
-      ...data,
-      ...accuracyData
-    };
-  });
-  
+  const processedMockScores = getProcessedScores(currentMock, mockScores);
   processedMockScores.sort((a, b) => compareRankedScores(a, b));
   
-  const sortedMockScores = processedMockScores.map(x => x.scoreObj);
+  const sortedMockScores = processedMockScores.map(x => {
+    return mockScores.find(s => s.candidateName === x.candidateName);
+  });
   
   sortedMockScores.forEach(s => {
     const tr = document.createElement("tr");
@@ -2503,33 +2595,39 @@ function renderIndividualReport() {
   }
   
   // Calculate rankings to show candidate position
-  const rankingList = mockScores.map(cs => {
-    const stats = getMockDataForCandidate(currentMock, cs);
-    const accuracyData = getAccuracyDataForCandidate(currentMock, cs);
-    return {
-      candidateName: cs.candidateName,
-      ...stats,
-      ...accuracyData
-    };
-  });
+  const processedScores = getProcessedScores(currentMock, mockScores);
   
-  rankingList.sort((a, b) => compareRankedScores(a, b, "raw"));
-  const rankRaw = rankingList.findIndex(r => r.candidateName === selectedCandidateName) + 1;
+  processedScores.sort((a, b) => compareRankedScores(a, b, "raw"));
+  const rankRaw = processedScores.findIndex(r => r.candidateName === selectedCandidateName) + 1;
   
-  rankingList.sort((a, b) => compareRankedScores(a, b, "weighted"));
-  const rankWeighted = rankingList.findIndex(r => r.candidateName === selectedCandidateName) + 1;
+  processedScores.sort((a, b) => compareRankedScores(a, b, "weighted"));
+  const rankWeighted = processedScores.findIndex(r => r.candidateName === selectedCandidateName) + 1;
+
+  processedScores.sort((a, b) => compareRankedScores(a, b, "sten"));
+  const rankSten = processedScores.findIndex(r => r.candidateName === selectedCandidateName) + 1;
   
-  const stats = getMockDataForCandidate(currentMock, candScore);
+  const candProcessed = processedScores.find(r => r.candidateName === selectedCandidateName);
   
   // Candidate Header Details
   document.getElementById("ind-name").textContent = selectedCandidateName;
   document.getElementById("ind-avatar").textContent = selectedCandidateName.charAt(0).toUpperCase();
   document.getElementById("ind-mock-title").textContent = selectedMockName;
   
-  document.getElementById("ind-rank").innerHTML = `${rankingType === "raw" ? rankRaw : rankWeighted} <span class="card-value-unit">/ ${mockScores.length}</span>`;
-  document.getElementById("ind-raw").innerHTML = `${stats.rawTotal} <span class="card-value-unit">/ ${stats.rawMax}</span>`;
-  document.getElementById("ind-weighted").innerHTML = `${stats.weightedTotal.toFixed(1)} <span class="card-value-unit">/ ${stats.weightedMax}</span>`;
-  document.getElementById("ind-avg").innerHTML = `${(rankingType === "raw" ? stats.rawPercentage : stats.weightedPercentage).toFixed(1)}%`;
+  let activeRank = rankWeighted;
+  let activePercentage = candProcessed.weightedPercentage;
+  if (rankingType === "raw") {
+    activeRank = rankRaw;
+    activePercentage = candProcessed.rawPercentage;
+  } else if (rankingType === "sten") {
+    activeRank = rankSten;
+    activePercentage = candProcessed.stenPercentage;
+  }
+  
+  document.getElementById("ind-rank").innerHTML = `${activeRank} <span class="card-value-unit">/ ${mockScores.length}</span>`;
+  document.getElementById("ind-raw").innerHTML = `${candProcessed.rawTotal} <span class="card-value-unit">/ ${candProcessed.rawMax}</span>`;
+  document.getElementById("ind-weighted").innerHTML = `${candProcessed.weightedTotal.toFixed(1)} <span class="card-value-unit">/ ${candProcessed.weightedMax}</span>`;
+  document.getElementById("ind-avg").innerHTML = `${activePercentage.toFixed(1)}%`;
+  document.getElementById("ind-sten").innerHTML = `${candProcessed.stenTotal} <span class="card-value-unit">/ ${candProcessed.stenMax}</span>`;
   
   // Strengths & Weaknesses (Top 3, Bottom 3) with Peer Comparison
   const accEnabled = isAccuracyEnabled(selectedMockName);
@@ -2648,6 +2746,7 @@ function renderIndividualReport() {
           <th>คิดเป็นร้อยละ</th>
           <th>ข้อที่ทำ</th>
           <th>% Accuracy</th>
+          <th>คะแนน STEN</th>
           <th>ค่าเฉลี่ยกลุ่ม</th>
           <th>ส่วนต่างจากเฉลี่ย</th>
           <th>คะแนนสูงสุด</th>
@@ -2662,6 +2761,7 @@ function renderIndividualReport() {
           <th>คะแนนของฉัน</th>
           <th>คะแนนเต็ม</th>
           <th>คิดเป็นร้อยละ</th>
+          <th>คะแนน STEN</th>
           <th>ค่าเฉลี่ยกลุ่ม</th>
           <th>ส่วนต่างจากเฉลี่ย</th>
           <th>คะแนนสูงสุด</th>
@@ -2679,15 +2779,25 @@ function renderIndividualReport() {
       const scoreVal = candScore.scores[part.name] || 0;
       const pct = part.max > 0 ? (scoreVal / part.max) * 100 : 0;
       
-      // Calculate group average
-      const sum = mockScores.reduce((acc, s) => acc + (s.scores[part.name] || 0), 0);
+      // Calculate group average and SD for STEN
+      const rawScores = mockScores.map(s => s.scores[part.name] || 0);
+      const sum = rawScores.reduce((acc, val) => acc + val, 0);
       const average = mockScores.length > 0 ? sum / mockScores.length : 0;
       
+      const variance = mockScores.length > 0 ? rawScores.reduce((acc, val) => acc + Math.pow(val - average, 2), 0) / mockScores.length : 0;
+      const stdDev = Math.sqrt(variance);
+      
+      let partSten = 6;
+      if (stdDev > 0) {
+        const z = (scoreVal - average) / stdDev;
+        partSten = Math.max(1, Math.min(10, Math.round(z * 2 + 5.5)));
+      }
+      
       // Calculate max score for this part
-      const maxScore = mockScores.length > 0 ? Math.max(...mockScores.map(s => s.scores[part.name] || 0)) : 0;
+      const maxScore = mockScores.length > 0 ? Math.max(...rawScores) : 0;
       
       // Calculate part rank
-      const allScoresInPart = mockScores.map(s => s.scores[part.name] || 0);
+      const allScoresInPart = [...rawScores];
       allScoresInPart.sort((a, b) => b - a);
       const partRank = allScoresInPart.indexOf(scoreVal) + 1;
       
@@ -2724,6 +2834,7 @@ function renderIndividualReport() {
           <td style="font-weight: 500;">${attempted !== undefined && attempted !== null ? attempted : '-'}</td>
           <td class="score-cell" style="color: var(--color-primary); font-weight: 600;">${partAcc !== null ? partAcc.toFixed(1) + '%' : '-'}</td>
         ` : ""}
+        <td class="score-cell" style="font-weight: bold; color: var(--color-primary);">${partSten}</td>
         <td style="font-weight: 500;">${average.toFixed(1)}</td>
         <td ${diffClass}>${diffSign}</td>
         <td style="font-weight: 500;">${maxScore}</td>
