@@ -1303,8 +1303,8 @@ function initializeMockOptions() {
     return;
   }
   
-  // Show latest created mock first (reverse order of creation in database)
-  const displayMocks = [...db.mocks].reverse();
+  // Sort mocks alphabetically in the dropdown selectors
+  const displayMocks = [...db.mocks].sort((a, b) => b.name.localeCompare(a.name));
   
   displayMocks.forEach(mock => {
     const opt = document.createElement("option");
