@@ -1303,10 +1303,10 @@ function initializeMockOptions() {
     return;
   }
   
-  // Sort mocks alphabetically or chronologically
-  db.mocks.sort((a, b) => b.name.localeCompare(a.name));
+  // Show latest created mock first (reverse order of creation in database)
+  const displayMocks = [...db.mocks].reverse();
   
-  db.mocks.forEach(mock => {
+  displayMocks.forEach(mock => {
     const opt = document.createElement("option");
     opt.value = mock.name;
     opt.textContent = mock.name;
@@ -1325,9 +1325,9 @@ function initializeMockOptions() {
     }
   });
   
-  // Select default mock
+  // Select default mock (latest created mock first)
   if (!selectedMockName || !db.mocks.find(m => m.name === selectedMockName)) {
-    selectedMockName = db.mocks[0].name;
+    selectedMockName = db.mocks[db.mocks.length - 1].name;
   }
   
   select.value = selectedMockName;
