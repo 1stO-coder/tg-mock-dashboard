@@ -5,8 +5,11 @@ const SUPABASE_URL = "https://aqeajeglzxmnlodxaqga.supabase.co";
 const SUPABASE_KEY = "sb_publishable_AfpcryzfwpquPGW3kQiUrw_tX3SveZc";
 let supabaseClient = null;
 
-if (window.supabase) {
-  supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+function getSupabaseClient() {
+  if (!supabaseClient && window.supabase && window.supabase.createClient) {
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  }
+  return supabaseClient;
 }
 
 let apiUrl = SUPABASE_URL;
@@ -1220,13 +1223,14 @@ async function loadData() {
   }
   
   // 2. Background Sync with Supabase
-  if (supabaseClient) {
+  const client = getSupabaseClient();
+  if (client) {
     setSyncStatus("loading", "กำลังซิงค์ข้อมูลกับ Supabase...");
     (async () => {
       try {
         const [mocksRes, scoresRes] = await Promise.all([
-          supabaseClient.from("mocks").select("*"),
-          supabaseClient.from("scores").select("*")
+          client.from("mocks").select("*"),
+          client.from("scores").select("*")
         ]);
         
         if (mocksRes.error) throw mocksRes.error;
@@ -3011,12 +3015,12 @@ async function submitNewMock(event) {
       try {
         if (payload.action === "editMock") {
           if (editingOriginalMockName !== mockName) {
-            await supabaseClient.from("mocks").delete().eq("name", editingOriginalMockName);
+            await client.from("mocks").delete().eq("name", editingOriginalMockName);
           }
-          const { error } = await supabaseClient.from("mocks").upsert({ name: mockName, parts: parts }, { onConflict: "name" });
+          const { error } = await client.from("mocks").upsert({ name: mockName, parts: parts }, { onConflict: "name" });
           if (error) throw error;
         } else {
-          const { error } = await supabaseClient.from("mocks").insert({ name: mockName, parts: parts });
+          const { error } = await client.from("mocks").insert({ name: mockName, parts: parts });
           if (error) throw error;
         }
         showToast(`อัปเดตแก้ไข Mock ${mockName} สำเร็จ`, "success");
@@ -3044,12 +3048,12 @@ async function submitNewMock(event) {
       try {
         if (payload.action === "editMock") {
           if (editingOriginalMockName !== mockName) {
-            await supabaseClient.from("mocks").delete().eq("name", editingOriginalMockName);
+            await client.from("mocks").delete().eq("name", editingOriginalMockName);
           }
-          const { error } = await supabaseClient.from("mocks").upsert({ name: mockName, parts: parts }, { onConflict: "name" });
+          const { error } = await client.from("mocks").upsert({ name: mockName, parts: parts }, { onConflict: "name" });
           if (error) throw error;
         } else {
-          const { error } = await supabaseClient.from("mocks").insert({ name: mockName, parts: parts });
+          const { error } = await client.from("mocks").insert({ name: mockName, parts: parts });
           if (error) throw error;
         }
         showToast(`สร้าง Mock ${mockName} เรียบร้อย`, "success");
@@ -3301,7 +3305,7 @@ async function submitScore(event) {
   
   if (apiUrl) {
     try {
-      const { error } = await supabaseClient.from("scores").upsert({
+      const { error } = await client.from("scores").upsert({
         mock_name: mockName,
         candidate_name: candidateName,
         scores: scores
@@ -3369,7 +3373,7 @@ async function executeDeleteScore() {
   
   if (apiUrl) {
     try {
-      const { error } = await supabaseClient.from("scores").upsert({
+      const { error } = await client.from("scores").upsert({
         mock_name: mockName,
         candidate_name: candidateName,
         scores: scores
@@ -3446,7 +3450,7 @@ async function executeDeleteMock(mockName) {
   
   if (apiUrl) {
     try {
-      const { error } = await supabaseClient.from("scores").upsert({
+      const { error } = await client.from("scores").upsert({
         mock_name: mockName,
         candidate_name: candidateName,
         scores: scores
