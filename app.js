@@ -3026,7 +3026,7 @@ async function submitNewMock(event) {
         showToast(`อัปเดตแก้ไข Mock ${mockName} สำเร็จ`, "success");
       } catch (err) {
         console.error(err);
-        showToast("บันทึกออนไลน์ไม่สำเร็จ! กรุณาตรวจสอบว่าได้อัปเดตสคริปต์ Google Apps Script เป็นเวอร์ชันล่าสุดใน Google Sheet แล้ว", "error");
+        showToast("บันทึกออนไลน์ไม่สำเร็จ! กรุณาตรวจสอบว่าได้อัปเดตสคริปต์ Supabase Database เรียบร้อยแล้ว", "error");
         setSyncStatus("error", "บันทึกออนไลน์ไม่สำเร็จ");
         setButtonLoading("btn-submit-mock", false);
         setButtonLoading("btn-delete-mock", false);
@@ -3059,7 +3059,7 @@ async function submitNewMock(event) {
         showToast(`สร้าง Mock ${mockName} เรียบร้อย`, "success");
       } catch (err) {
         console.error(err);
-        showToast("สร้าง Mock ออนไลน์ไม่สำเร็จ! กรุณาตรวจสอบว่าได้อัปเดตสคริปต์ Google Apps Script เป็นเวอร์ชันล่าสุดใน Google Sheet แล้ว", "error");
+        showToast("สร้าง Mock ออนไลน์ไม่สำเร็จ! กรุณาตรวจสอบว่าได้อัปเดตสคริปต์ Supabase Database เรียบร้อยแล้ว", "error");
         setSyncStatus("error", "สร้าง Mock ออนไลน์ไม่สำเร็จ");
         setButtonLoading("btn-submit-mock", false);
         setButtonLoading("btn-delete-mock", false);
@@ -3314,7 +3314,7 @@ async function submitScore(event) {
       showToast(`บันทึกคะแนนของ ${candidateName} สำเร็จ`, "success");
     } catch (err) {
       console.error(err);
-      showToast("บันทึกออนไลน์ไม่สำเร็จ! กรุณาตรวจสอบว่าได้อัปเดตสคริปต์ Google Apps Script เป็นเวอร์ชันล่าสุดใน Google Sheet แล้ว", "error");
+      showToast("บันทึกออนไลน์ไม่สำเร็จ! กรุณาตรวจสอบว่าได้อัปเดตสคริปต์ Supabase Database เรียบร้อยแล้ว", "error");
       setSyncStatus("error", "บันทึกออนไลน์ไม่สำเร็จ");
       setButtonLoading("btn-submit-score", false);
       setButtonLoading("btn-delete-score", false);
@@ -3382,7 +3382,7 @@ async function executeDeleteScore() {
       showToast("ลบคะแนนสำเร็จ", "success");
     } catch (err) {
       console.error(err);
-      showToast("ลบคะแนนออนไลน์ไม่สำเร็จ! กรุณาตรวจสอบว่าได้อัปเดตสคริปต์ Google Apps Script เป็นเวอร์ชันล่าสุดใน Google Sheet แล้ว", "error");
+      showToast("ลบคะแนนออนไลน์ไม่สำเร็จ! กรุณาตรวจสอบว่าได้อัปเดตสคริปต์ Supabase Database เรียบร้อยแล้ว", "error");
       setSyncStatus("error", "ลบคะแนนออนไลน์ไม่สำเร็จ");
       setButtonLoading("btn-confirm-delete-score", false);
       setButtonLoading("btn-delete-score", false);
@@ -3459,7 +3459,7 @@ async function executeDeleteMock(mockName) {
       showToast(`ลบชุดข้อสอบ ${mockName} สำเร็จ`, "success");
     } catch (err) {
       console.error(err);
-      showToast("ลบชุดข้อสอบออนไลน์ไม่สำเร็จ! กรุณาตรวจสอบว่าได้อัปเดตสคริปต์ Google Apps Script เป็นเวอร์ชันล่าสุดใน Google Sheet แล้ว", "error");
+      showToast("ลบชุดข้อสอบออนไลน์ไม่สำเร็จ! กรุณาตรวจสอบว่าได้อัปเดตสคริปต์ Supabase Database เรียบร้อยแล้ว", "error");
       setSyncStatus("error", "ลบข้อสอบออนไลน์ไม่สำเร็จ");
       setButtonLoading("btn-delete-mock", false);
       setButtonLoading("btn-submit-mock", false);
