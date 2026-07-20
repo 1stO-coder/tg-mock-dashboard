@@ -3011,26 +3011,22 @@ async function submitNewMock(event) {
       partRenames: partRenames
     };
     
-    if (apiUrl) {
+    const client = getSupabaseClient();
+    if (client) {
       try {
-        if (payload.action === "editMock") {
-          if (editingOriginalMockName !== mockName) {
-            await client.from("mocks").delete().eq("name", editingOriginalMockName);
-          }
-          const { error } = await client.from("mocks").upsert({ name: mockName, parts: parts }, { onConflict: "name" });
-          if (error) throw error;
-        } else {
-          const { error } = await client.from("mocks").insert({ name: mockName, parts: parts });
-          if (error) throw error;
+        if (editingOriginalMockName !== mockName) {
+          await client.from("mocks").delete().eq("name", editingOriginalMockName);
         }
+        const { error } = await client.from("mocks").upsert({ name: mockName, parts: parts }, { onConflict: "name" });
+        if (error) throw error;
         showToast(`อัปเดตแก้ไข Mock ${mockName} สำเร็จ`, "success");
       } catch (err) {
         console.error(err);
-        showToast("บันทึกออนไลน์ไม่สำเร็จ! กรุณาตรวจสอบว่าได้อัปเดตสคริปต์ Supabase Database เรียบร้อยแล้ว", "error");
+        showToast("บันทึกออนไลน์ไม่สำเร็จ! กรุณาตรวจสอบระบบ Supabase Database", "error");
         setSyncStatus("error", "บันทึกออนไลน์ไม่สำเร็จ");
         setButtonLoading("btn-submit-mock", false);
         setButtonLoading("btn-delete-mock", false);
-        return; // Stop execution to prevent overwriting local storage with old data
+        return;
       }
     } else {
       editMockLocally(editingOriginalMockName, mockName, parts, partRenames);
@@ -3038,32 +3034,19 @@ async function submitNewMock(event) {
     }
   } else {
     // Create Mode (Add Mock)
-    const payload = {
-      action: "addMock",
-      mockName,
-      parts
-    };
-    
-    if (apiUrl) {
+    const client = getSupabaseClient();
+    if (client) {
       try {
-        if (payload.action === "editMock") {
-          if (editingOriginalMockName !== mockName) {
-            await client.from("mocks").delete().eq("name", editingOriginalMockName);
-          }
-          const { error } = await client.from("mocks").upsert({ name: mockName, parts: parts }, { onConflict: "name" });
-          if (error) throw error;
-        } else {
-          const { error } = await client.from("mocks").insert({ name: mockName, parts: parts });
-          if (error) throw error;
-        }
+        const { error } = await client.from("mocks").upsert({ name: mockName, parts: parts }, { onConflict: "name" });
+        if (error) throw error;
         showToast(`สร้าง Mock ${mockName} เรียบร้อย`, "success");
       } catch (err) {
         console.error(err);
-        showToast("สร้าง Mock ออนไลน์ไม่สำเร็จ! กรุณาตรวจสอบว่าได้อัปเดตสคริปต์ Supabase Database เรียบร้อยแล้ว", "error");
+        showToast("สร้าง Mock ออนไลน์ไม่สำเร็จ! กรุณาตรวจสอบระบบ Supabase Database", "error");
         setSyncStatus("error", "สร้าง Mock ออนไลน์ไม่สำเร็จ");
         setButtonLoading("btn-submit-mock", false);
         setButtonLoading("btn-delete-mock", false);
-        return; // Stop execution to prevent overwriting local storage with old data
+        return;
       }
     } else {
       saveMockLocally(mockName, parts);
@@ -3303,7 +3286,8 @@ async function submitScore(event) {
     scores
   };
   
-  if (apiUrl) {
+  const client = getSupabaseClient();
+  if (client) {
     try {
       const { error } = await client.from("scores").upsert({
         mock_name: mockName,
@@ -3311,14 +3295,15 @@ async function submitScore(event) {
         scores: scores
       }, { onConflict: "mock_name,candidate_name" });
       if (error) throw error;
+      saveScoreLocally(mockName, candidateName, scores);
       showToast(`บันทึกคะแนนของ ${candidateName} สำเร็จ`, "success");
     } catch (err) {
-      console.error(err);
-      showToast("บันทึกออนไลน์ไม่สำเร็จ! กรุณาตรวจสอบว่าได้อัปเดตสคริปต์ Supabase Database เรียบร้อยแล้ว", "error");
+      console.error("Save score error:", err);
+      showToast("บันทึกออนไลน์ไม่สำเร็จ! กรุณาตรวจสอบระบบ Supabase Database", "error");
       setSyncStatus("error", "บันทึกออนไลน์ไม่สำเร็จ");
       setButtonLoading("btn-submit-score", false);
       setButtonLoading("btn-delete-score", false);
-      return; // Stop here so it doesn't overwrite
+      return;
     }
   } else {
     saveScoreLocally(mockName, candidateName, scores);
@@ -3371,23 +3356,24 @@ async function executeDeleteScore() {
   setButtonLoading("btn-delete-score", true, "กำลังลบ...");
   setButtonLoading("btn-submit-score", true, "กำลังรอ...");
   
-  if (apiUrl) {
+  const client = getSupabaseClient();
+  if (client) {
     try {
-      const { error } = await client.from("scores").upsert({
-        mock_name: mockName,
-        candidate_name: candidateName,
-        scores: scores
-      }, { onConflict: "mock_name,candidate_name" });
+      const { error } = await client.from("scores").delete().match({
+        mock_name: deleteMockRef,
+        candidate_name: deleteCandidateRef
+      });
       if (error) throw error;
+      deleteScoreLocally(deleteMockRef, deleteCandidateRef);
       showToast("ลบคะแนนสำเร็จ", "success");
     } catch (err) {
-      console.error(err);
-      showToast("ลบคะแนนออนไลน์ไม่สำเร็จ! กรุณาตรวจสอบว่าได้อัปเดตสคริปต์ Supabase Database เรียบร้อยแล้ว", "error");
+      console.error("Delete score error:", err);
+      showToast("ลบคะแนนออนไลน์ไม่สำเร็จ! กรุณาตรวจสอบระบบ Supabase Database", "error");
       setSyncStatus("error", "ลบคะแนนออนไลน์ไม่สำเร็จ");
       setButtonLoading("btn-confirm-delete-score", false);
       setButtonLoading("btn-delete-score", false);
       setButtonLoading("btn-submit-score", false);
-      return; // Stop here so it doesn't overwrite
+      return;
     }
   } else {
     deleteScoreLocally(deleteMockRef, deleteCandidateRef);
@@ -3448,18 +3434,16 @@ async function executeDeleteMock(mockName) {
   setButtonLoading("btn-delete-mock", true, "กำลังลบ...");
   setButtonLoading("btn-submit-mock", true, "กำลังรอ...");
   
-  if (apiUrl) {
+  const client = getSupabaseClient();
+  if (client) {
     try {
-      const { error } = await client.from("scores").upsert({
-        mock_name: mockName,
-        candidate_name: candidateName,
-        scores: scores
-      }, { onConflict: "mock_name,candidate_name" });
+      const { error } = await client.from("mocks").delete().eq("name", mockName);
       if (error) throw error;
+      deleteMockLocally(mockName);
       showToast(`ลบชุดข้อสอบ ${mockName} สำเร็จ`, "success");
     } catch (err) {
-      console.error(err);
-      showToast("ลบชุดข้อสอบออนไลน์ไม่สำเร็จ! กรุณาตรวจสอบว่าได้อัปเดตสคริปต์ Supabase Database เรียบร้อยแล้ว", "error");
+      console.error("Delete mock error:", err);
+      showToast("ลบชุดข้อสอบออนไลน์ไม่สำเร็จ! กรุณาตรวจสอบระบบ Supabase Database", "error");
       setSyncStatus("error", "ลบข้อสอบออนไลน์ไม่สำเร็จ");
       setButtonLoading("btn-delete-mock", false);
       setButtonLoading("btn-submit-mock", false);
