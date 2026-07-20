@@ -1,8 +1,15 @@
 // TG Mock Score Dashboard - Core Logic
 
-// Configuration
-let DEFAULT_API_URL = "https://script.google.com/macros/s/AKfycbwWiC1Vagu2V_jMevuA0CZq0PyMIJGRy5EdeypQC3DhaT_O4NJL05g4gfZNGnxSRkdn/exec";
-let apiUrl = DEFAULT_API_URL;
+// Configuration - Supabase Backend Integration
+const SUPABASE_URL = "https://aqeajeglzxmnlodxaqga.supabase.co";
+const SUPABASE_KEY = "sb_publishable_AfpcryzfwpquPGW3kQiUrw_tX3SveZc";
+let supabaseClient = null;
+
+if (window.supabase) {
+  supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+}
+
+let apiUrl = SUPABASE_URL;
 
 const DEFAULT_DB = {
   "mocks": [
@@ -1212,41 +1219,43 @@ async function loadData() {
     initializeMockOptions();
   }
   
-  // 2. Background Sync with Google Sheets
-  if (apiUrl) {
-    setSyncStatus("loading", "กำลังซิงค์ข้อมูลล่าสุด...");
-    
-    // Execute the fetch asynchronously in the background so it doesn't block the UI
+  // 2. Background Sync with Supabase
+  if (supabaseClient) {
+    setSyncStatus("loading", "กำลังซิงค์ข้อมูลกับ Supabase...");
     (async () => {
       try {
-        const response = await fetch(apiUrl);
-        if (!response.ok) throw new Error("HTTP error " + response.status);
-        const data = await response.json();
+        const [mocksRes, scoresRes] = await Promise.all([
+          supabaseClient.from("mocks").select("*"),
+          supabaseClient.from("scores").select("*")
+        ]);
         
-        // Compare with current database to see if we need to re-render
-        const dataStr = JSON.stringify(data);
+        if (mocksRes.error) throw mocksRes.error;
+        if (scoresRes.error) throw scoresRes.error;
+        
+        const fetchedDb = {
+          mocks: mocksRes.data.map(m => ({ name: m.name, parts: m.parts })),
+          scores: scoresRes.data.map(s => ({
+            mockName: s.mock_name,
+            candidateName: s.candidate_name,
+            scores: s.scores
+          }))
+        };
+        
+        const dataStr = JSON.stringify(fetchedDb);
         const currentStr = JSON.stringify(db);
         
         if (dataStr !== currentStr) {
-          db = data;
+          db = fetchedDb;
           normalizeDbNames();
           localStorage.setItem("tg_mock_db_cache", JSON.stringify(db));
           initializeMockOptions();
-          showToast("อัปเดตข้อมูลล่าสุดจาก Google Sheets เรียบร้อย", "success");
         }
-        setSyncStatus("online", "ซิงค์กับ Google Sheet แล้ว");
+        setSyncStatus("online", "ซิงค์กับ Supabase แล้ว 🟢");
       } catch (error) {
-        console.error("Background sync failed:", error);
+        console.error("Supabase sync failed:", error);
         setSyncStatus("offline", "โหมดออฟไลน์ (ใช้ข้อมูลในเครื่อง)");
-        if (!isInitialLoad) {
-          showToast("ไม่สามารถซิงค์ข้อมูลล่าสุดได้ กำลังใช้ข้อมูลในเครื่อง", "warning");
-        }
       }
     })();
-  } else {
-    if (isInitialLoad) {
-      showToast("ยังไม่ได้ตั้งค่า API ซิงค์ข้อมูล", "warning");
-    }
   }
 }
 
@@ -3000,13 +3009,16 @@ async function submitNewMock(event) {
     
     if (apiUrl) {
       try {
-        const response = await fetch(apiUrl, {
-          method: "POST",
-          body: JSON.stringify(payload),
-          headers: { "Content-Type": "text/plain" }
-        });
-        const res = await response.json();
-        if (!res.success) throw new Error(res.error);
+        if (payload.action === "editMock") {
+          if (editingOriginalMockName !== mockName) {
+            await supabaseClient.from("mocks").delete().eq("name", editingOriginalMockName);
+          }
+          const { error } = await supabaseClient.from("mocks").upsert({ name: mockName, parts: parts }, { onConflict: "name" });
+          if (error) throw error;
+        } else {
+          const { error } = await supabaseClient.from("mocks").insert({ name: mockName, parts: parts });
+          if (error) throw error;
+        }
         showToast(`อัปเดตแก้ไข Mock ${mockName} สำเร็จ`, "success");
       } catch (err) {
         console.error(err);
@@ -3030,13 +3042,16 @@ async function submitNewMock(event) {
     
     if (apiUrl) {
       try {
-        const response = await fetch(apiUrl, {
-          method: "POST",
-          body: JSON.stringify(payload),
-          headers: { "Content-Type": "text/plain" }
-        });
-        const res = await response.json();
-        if (!res.success) throw new Error(res.error);
+        if (payload.action === "editMock") {
+          if (editingOriginalMockName !== mockName) {
+            await supabaseClient.from("mocks").delete().eq("name", editingOriginalMockName);
+          }
+          const { error } = await supabaseClient.from("mocks").upsert({ name: mockName, parts: parts }, { onConflict: "name" });
+          if (error) throw error;
+        } else {
+          const { error } = await supabaseClient.from("mocks").insert({ name: mockName, parts: parts });
+          if (error) throw error;
+        }
         showToast(`สร้าง Mock ${mockName} เรียบร้อย`, "success");
       } catch (err) {
         console.error(err);
@@ -3286,13 +3301,12 @@ async function submitScore(event) {
   
   if (apiUrl) {
     try {
-      const response = await fetch(apiUrl, {
-        method: "POST",
-        body: JSON.stringify(payload),
-        headers: { "Content-Type": "text/plain" }
-      });
-      const res = await response.json();
-      if (!res.success) throw new Error(res.error);
+      const { error } = await supabaseClient.from("scores").upsert({
+        mock_name: mockName,
+        candidate_name: candidateName,
+        scores: scores
+      }, { onConflict: "mock_name,candidate_name" });
+      if (error) throw error;
       showToast(`บันทึกคะแนนของ ${candidateName} สำเร็จ`, "success");
     } catch (err) {
       console.error(err);
@@ -3355,13 +3369,12 @@ async function executeDeleteScore() {
   
   if (apiUrl) {
     try {
-      const response = await fetch(apiUrl, {
-        method: "POST",
-        body: JSON.stringify(payload),
-        headers: { "Content-Type": "text/plain" }
-      });
-      const res = await response.json();
-      if (!res.success) throw new Error(res.error);
+      const { error } = await supabaseClient.from("scores").upsert({
+        mock_name: mockName,
+        candidate_name: candidateName,
+        scores: scores
+      }, { onConflict: "mock_name,candidate_name" });
+      if (error) throw error;
       showToast("ลบคะแนนสำเร็จ", "success");
     } catch (err) {
       console.error(err);
@@ -3433,13 +3446,12 @@ async function executeDeleteMock(mockName) {
   
   if (apiUrl) {
     try {
-      const response = await fetch(apiUrl, {
-        method: "POST",
-        body: JSON.stringify(payload),
-        headers: { "Content-Type": "text/plain" }
-      });
-      const res = await response.json();
-      if (!res.success) throw new Error(res.error);
+      const { error } = await supabaseClient.from("scores").upsert({
+        mock_name: mockName,
+        candidate_name: candidateName,
+        scores: scores
+      }, { onConflict: "mock_name,candidate_name" });
+      if (error) throw error;
       showToast(`ลบชุดข้อสอบ ${mockName} สำเร็จ`, "success");
     } catch (err) {
       console.error(err);
